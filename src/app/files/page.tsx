@@ -1,14 +1,18 @@
+import { FilesResponse } from '@/app/api/files/route'
+import { headers } from 'next/headers'
+
 export default async function Page() {
-  const res = await fetch("http://localhost:3000/api/files/", {
+  const host = headers().get("host");
+  const res = await fetch(`http://${host}/api/files/`, {
     method: "GET",
     cache: 'no-store'
   });
-  const fileList: Array<any> = await res.json();
-  console.log(fileList);
+  const files: FilesResponse = await res.json();
+  console.log(files);
   return (
     <ul>
-      {fileList.map((f) => (
-        <li key={f.id}>{f.name}</li>
+      {files.map((f, index) => (
+        <li key={f.key}>{index+1}. {f.displayName}</li>
       ))}
     </ul>
   )
