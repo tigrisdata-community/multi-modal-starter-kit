@@ -13,6 +13,8 @@ save_location='static'
 save_dir = os.path.join(os.getcwd(), save_location)
 os.makedirs(save_dir, exist_ok=True)
 set_api_key(os.environ.get("ELEVENLABS_API_KEY"))
+IMAGE_CAPTURE_INTERVAL = 2
+COLLAGE_FRAMES = 5
 
 openAI = OpenAI()
 
@@ -105,7 +107,6 @@ def take_photo():
         logging.error(f"Error capturing image: {e}")
 
 def save_image_collage(base64_images):
-        # Assuming base64Frames is populated as in your provided code
     montage = None
 
     for base64_frame in base64_images:
@@ -134,21 +135,22 @@ def save_image_collage(base64_images):
 def main():
     context = []
     base64Frames = []
-    numOfFrames = 5
+
     while True:
         filePath = capture_photo()
         base64_image = encode_image(filePath)
-        if len(base64Frames) < numOfFrames:
+        if len(base64Frames) < COLLAGE_FRAMES:
             base64Frames.append(base64_image)
         else:
-            aiResponse = describe_image(base64Frames, context)
+            # ---- Uncomment to test AI response on device while developing ----
+            # aiResponse = describe_image(base64Frames, context)
+            # logging.info(f"AI Response: {aiResponse}")
+            # play_audio(aiResponse)
+            # context = context + [{"role": "assistant", "content": aiResponse}]
             save_image_collage(base64Frames)
-            logging.info(f"AI Response: {aiResponse}")
-            play_audio(aiResponse)
-            context = context + [{"role": "assistant", "content": aiResponse}]
             base64Frames = []
 
-        time.sleep(2)
+        time.sleep(IMAGE_CAPTURE_INTERVAL)
 
 if __name__ == "__main__":
     main()
