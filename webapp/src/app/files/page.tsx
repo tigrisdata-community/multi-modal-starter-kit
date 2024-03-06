@@ -18,7 +18,12 @@ export default async function Page () {
       <ul>
         {files.map((f, index) => (
           <li key={f.key}>
-            <span><Link href={`/files/${f.urlSlug}`}>{index + 1}. {f.displayName}</Link></span>
+            <span><Link href={{
+              pathname: "/files/play",
+              query: {
+                name: f.key
+              }
+              } }>{index + 1}. {f.displayName}</Link></span>
           </li>
         ))}
       </ul>
