@@ -18,7 +18,7 @@ export async function GET () {
   const fileList: FilesResponse = []
   if (resp.Contents) {
     for (let i = 0; i < resp.Contents.length; i++) {
-      const key = resp.Contents[0].Key
+      const key = resp.Contents[i].Key
       if (key === undefined) {
         continue
       }
