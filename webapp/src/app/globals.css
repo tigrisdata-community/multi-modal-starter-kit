@@ -105,3 +105,14 @@ a {
     color-scheme: dark;
   }
 }
+
+
+.flex-box{
+  display:flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.bt-space{
+  margin-bottom: 40px;
+}
