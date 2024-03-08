@@ -1,5 +1,6 @@
 'use client'
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Context } from "vm";
 
 export default function Page({ searchParams }: {
   searchParams: {
@@ -39,14 +40,47 @@ export default function Page({ searchParams }: {
     }
   }, [narration])
 
+
+
+  const vidRef = useRef(null);
+  const canRef = useRef(null);
+  
+  const handlePlayVideo = () => {
+    if(vidRef.current != null){
+      vidRef.current.play();
+    }
+  }
+  
+
+  function captureFrame() {     
+
+    if(canRef.current && vidRef.current){
+      const context = canRef.current.getContext('2d');
+      context.drawImage(vidRef.current, 0, 0, 110, 120);
+      const dataURL = canRef.current.toDataURL('image/jpeg', 0.5);
+      console.log(dataURL);
+    }
+
+}
+
+
   return (
-    <body>
+    <>
       <h3>Playing video from Tigris:</h3>
-      <video id="vid1" width="640" height="480" controls preload="auto" data-setup="{}">
-        <source src={`${videoUrl}`} type="video/mp4" />
+    
+      <video ref={vidRef} width="640" height="480" controls preload="auto" data-setup="{}">
+        <source src='/city_lights_sample.mp4' type="video/mp4" />
       </video>
+      <button onClick={handlePlayVideo}>
+            Play
+          </button>
+      <button onClick={captureFrame}>
+            Capture
+        </button>
       <h3>Narration using GPT 4 vision:</h3>
       <h4>{eachNar}</h4>
-    </body>
+      
+      <canvas ref={canRef} width="200" height="200" style={{overflow:'auto'}}></canvas>
+      </>
   )
 }
