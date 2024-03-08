@@ -8,11 +8,14 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import OpenAI from "openai";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { Resend } from "resend";
+import { EmailTemplate } from "@/components/emailTemplate";
 
 const openai = new OpenAI({
   apiKey: process.env["OPENAI_API_KEY"], // This is the default and can be omitted
 });
 const client = new S3Client();
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function fetchLatestFromTigris() {
   const listObjectsV2Command = new ListObjectsV2Command({
@@ -96,9 +99,19 @@ export async function describeImage(url: string) {
   return result;
 }
 
+export async function notifyViaEmail(url: string) {
+  const { data, error } = await resend.emails.send({
+    from: process.env.FROM_EMAIL!,
+    to: [process.env.TO_EMAIL!],
+    subject: "AI detection",
+    react: EmailTemplate({ url }),
+    html: "",
+  });
+}
+
 export const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(1, "3 m"),
+  limiter: Ratelimit.slidingWindow(3, "3 m"),
   analytics: true,
   prefix: "@upstash/ratelimit",
 });

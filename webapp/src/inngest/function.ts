@@ -1,4 +1,9 @@
-import { describeImage, fetchLatestFromTigris, ratelimit } from "@/app/utils";
+import {
+  describeImage,
+  fetchLatestFromTigris,
+  ratelimit,
+  notifyViaEmail,
+} from "@/app/utils";
 import { inngest } from "./client";
 
 export const inngestTick = inngest.createFunction(
@@ -28,10 +33,11 @@ export const inngestTick = inngest.createFunction(
 export const sendEmail = inngest.createFunction(
   { id: "sendEmail", retries: 0 },
   { event: "aiResponse.complete" },
-  async ({ step }) => {
+  async ({ event, step }) => {
     const { success } = await ratelimit.limit("sendEmail");
     if (success) {
       console.log("sending an email!!");
+      await notifyViaEmail(event.data.url);
     }
   }
 );
