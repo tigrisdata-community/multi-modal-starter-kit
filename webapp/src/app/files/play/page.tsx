@@ -7,6 +7,7 @@ export default function Page({ searchParams }: {
   }
 }) {
 
+  // todo: fix me
   const host = 'localhost:3000'
   const videoUrl: string = `https://${process.env.BUCKET_NAME}.fly.storage.tigris.dev/${searchParams.name}`
   const [narration, setNarration] = useState("");
