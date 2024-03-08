@@ -1,10 +1,11 @@
 import OpenAI from "openai";
 
+
 const openai = new OpenAI({
-  apiKey: process.env["OPENAI_API_KEY"], // This is the default and can be omitted
+  apiKey: process.env.OPENAI_API_KEY, // This is the default and can be omitted
 });
 
-export async function describeImage(url: string) {
+export async function describeImage(imageUrl: string) {
   const chatCompletion = await openai.chat.completions.create({
     messages: [
       {
@@ -22,7 +23,7 @@ export async function describeImage(url: string) {
           },
           {
             type: "image_url",
-            image_url: { url },
+            image_url: { url: imageUrl },
           },
         ],
       },

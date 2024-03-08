@@ -16,11 +16,11 @@ export default function Page({ searchParams }: {
     const res = fetch(`http://${host}/api/describe/`, {
       method: 'POST',
       body: JSON.stringify({
-        'url': videoUrl
+        'frame': 'myFrame'
       })
     }).then(async (response) => {
-      const result = await response.json();
-      setNarration(result.data);
+      const result = await response.text();
+      setNarration(result);
     });
   }, [videoUrl])
 
