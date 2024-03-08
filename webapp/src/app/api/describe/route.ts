@@ -5,6 +5,5 @@ export async function POST(req: NextRequest) {
   const videoUrl = (await req.json())["frame"];
   console.log("querying openai for narration")
   const aiResponse = await describeImage(videoUrl);
-  console.log(aiResponse)
   return new Response(aiResponse.content);
 }
