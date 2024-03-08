@@ -13,7 +13,7 @@ export type FilesResponse = Array<TigrisObject>;
 
 export async function GET () {
   const listObjectsV2Command = new ListObjectsV2Command(
-    { Bucket: process.env.BUCKET_NAME })
+    { Bucket: process.env.NEXT_PUBLIC_BUCKET_NAME })
   const resp = await client.send(listObjectsV2Command)
   const fileList: FilesResponse = []
   if (resp.Contents) {

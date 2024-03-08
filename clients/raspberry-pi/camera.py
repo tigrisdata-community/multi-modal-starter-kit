@@ -23,7 +23,7 @@ os.makedirs(save_dir, exist_ok=True)
 set_api_key(os.environ.get("ELEVENLABS_API_KEY"))
 IMAGE_CAPTURE_INTERVAL = 2
 COLLAGE_FRAMES = 5
-BUCKET_NAME = os.environ.get("BUCKET_NAME")
+BUCKET_NAME = os.environ.get("NEXT_PUBLIC_BUCKET_NAME")
 
 openAI = OpenAI()
 
@@ -147,7 +147,7 @@ def save_image_collage(base64_images):
     cv2.imwrite(file_path, collage)
     # save to Tigris bucket
     try: 
-        svc.upload_file(file_path, BUCKET_NAME, "collage/"+file_name)
+        svc.upload_file(file_path, NEXT_PUBLIC_BUCKET_NAME, "collage/"+file_name)
     except Exception as e:
         logging.error(f"Error uploading {file_name} to Tigris: {e}")
     logging.info(f"Collage saved successfully. Path: {file_path}")

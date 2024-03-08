@@ -1,4 +1,5 @@
 'use client'
+
 import { useEffect, useRef, useState } from "react";
 import { Context } from "vm";
 
@@ -9,7 +10,7 @@ export default function Page({ searchParams }: {
 }) {
 
   const host = 'localhost:3000'
-  const videoUrl: string = `https://${process.env.BUCKET_NAME}.fly.storage.tigris.dev/${searchParams.name}`
+  const videoUrl: string = `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${searchParams.name}`
   const [narration, setNarration] = useState("");
   const [eachNar, setEachNar] = useState("");
 
@@ -57,7 +58,9 @@ export default function Page({ searchParams }: {
     if(canRef.current && vidRef.current){
       const context = canRef.current.getContext('2d');
       context.drawImage(vidRef.current, 0, 0, 110, 120);
+
       const dataURL = canRef.current.toDataURL('image/jpeg', 0.5);
+
       console.log(dataURL);
     }
 
@@ -68,9 +71,12 @@ export default function Page({ searchParams }: {
     <>
       <h3>Playing video from Tigris:</h3>
     
-      <video ref={vidRef} width="640" height="480" controls preload="auto" data-setup="{}">
-        <source src='/city_lights_sample.mp4' type="video/mp4" />
+    <p>{videoUrl}</p>
+ 
+      <video ref={vidRef} width="640" height="480"  controls preload="auto" data-setup="{}">
+        <source src={videoUrl} type="video/mp4" />
       </video>
+      
       <button onClick={handlePlayVideo}>
             Play
           </button>
