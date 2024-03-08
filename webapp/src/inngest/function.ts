@@ -1,4 +1,4 @@
-import { describeImage, fetchLatestFromTigris } from "@/app/utils";
+import { describeImage, fetchLatestFromTigris, ratelimit } from "@/app/utils";
 import { inngest } from "./client";
 
 export const inngestTick = inngest.createFunction(
@@ -14,13 +14,24 @@ export const inngestTick = inngest.createFunction(
       timeout: "1m",
     });
 
-    const url = result?.data.result;
+    const url = result?.data.url;
     console.log("url", url);
     if (!!url) {
       // TODO - only send request to OAI if url hasn't been seen before.
       await step.run("describe-image", async () => {
         return await describeImage(url);
       });
+    }
+  }
+);
+
+export const sendEmail = inngest.createFunction(
+  { id: "sendEmail", retries: 0 },
+  { event: "aiResponse.complete" },
+  async ({ step }) => {
+    const { success } = await ratelimit.limit("sendEmail");
+    if (success) {
+      console.log("sending an email!!");
     }
   }
 );

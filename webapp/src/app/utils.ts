@@ -6,6 +6,8 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import OpenAI from "openai";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
 const openai = new OpenAI({
   apiKey: process.env["OPENAI_API_KEY"], // This is the default and can be omitted
@@ -42,7 +44,7 @@ export async function fetchLatestFromTigris() {
   const url = await getSignedUrl(client, getObjectCommand);
   inngest.send({
     name: "Tigris.complete",
-    data: { result: url },
+    data: { url },
   });
   return url;
 }
@@ -75,16 +77,28 @@ export async function describeImage(url: string) {
   });
   const content = chatCompletion.choices[0].message.content;
   console.log("AI Response", content);
+  const result = {
+    message: chatCompletion.choices[0].message,
+    url,
+    ts: Date.now(),
+  };
 
   if (["TRUE", "FALSE"].includes(content || "")) {
     inngest.send({
       name: "aiResponse.complete",
-      data: { result: content },
+      data: { ...result },
     });
   } else {
     // inngest will auto retry
     throw new Error("OpenAI response does not conform to the expected format.");
   }
 
-  return chatCompletion.choices[0].message;
+  return result;
 }
+
+export const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(1, "3 m"),
+  analytics: true,
+  prefix: "@upstash/ratelimit",
+});
