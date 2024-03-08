@@ -27,8 +27,6 @@ export default function Page({ searchParams }: {
     }
   }, [narration])
 
-
-
   const vidRef = useRef(null);
   const canRef = useRef(null);
 
@@ -38,20 +36,13 @@ export default function Page({ searchParams }: {
     }
   }
 
-
   function captureFrame() {
-
     if (canRef.current && vidRef.current) {
-
       vidRef.current.pause();
-
       const context = canRef.current.getContext('2d');
       context.drawImage(vidRef.current, 0, 0, 640, 400);
-
       const dataURL = canRef.current.toDataURL('image/jpeg', 1);
-
       setShowSpinner(true);
-
       fetch(`/api/describe/`, {
         method: 'POST',
         body: JSON.stringify({
@@ -68,31 +59,29 @@ export default function Page({ searchParams }: {
 
   return (
     <>
+      <div className="playerContainer">
+        <h3>Playing video from Tigris:</h3>
+        <p>{videoUrl}</p>
 
-    <div className="playerContainer">
+        <video ref={vidRef} crossOrigin="" width="640" height="400" controls preload="auto" data-setup="{}">
+          <source src={videoUrl} type="video/mp4" />
+        </video>
 
-      <h3>Playing video from Tigris:</h3>
-      <p>{videoUrl}</p>
+        <div>
+          <button className='button-53' onClick={handlePlayVideo} style={{ marginRight: 20 }}>
+            Play
+          </button>
+          <button onClick={captureFrame}>
+            Capture
+          </button>
+        </div>
 
-      <video ref={vidRef} crossOrigin="" width="640" height="400" controls preload="auto" data-setup="{}">
-        <source src={videoUrl} type="video/mp4" />
-      </video>
-      
-      <div>
-        <button className='button-53' onClick={handlePlayVideo} style={{marginRight:20}}>
-          Play
-        </button>
-        <button onClick={captureFrame}>
-          Capture
-        </button>
-      </div>
+        <h3>Narration using GPT 4 vision:</h3>
+        <p>{eachNar}</p>
 
-      <h3>Narration using GPT 4 vision:</h3>
-      <p>{eachNar}</p>
+        {showSpinner && <div className="lds-ellipsis"><div></div><div></div><div></div><div></div></div>}
 
-      {showSpinner && <div className="lds-ellipsis"><div></div><div></div><div></div><div></div></div>}
-
-      <canvas ref={canRef} width="640" height="480" style={{ display: 'none' }}></canvas>
+        <canvas ref={canRef} width="640" height="480" style={{ display: 'none' }}></canvas>
       </div>
     </>
   )
