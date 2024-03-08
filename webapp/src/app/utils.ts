@@ -12,7 +12,7 @@ import { Resend } from "resend";
 import { EmailTemplate } from "@/components/emailTemplate";
 
 const openai = new OpenAI({
-  apiKey: process.env["OPENAI_API_KEY"], // This is the default and can be omitted
+  apiKey: process.env.OPENAI_API_KEY, // This is the default and can be omitted
 });
 const client = new S3Client();
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -70,7 +70,7 @@ export async function describeImage(url: string) {
           },
           {
             type: "image_url",
-            image_url: { url },
+            image_url: { url: url },
           },
         ],
       },
