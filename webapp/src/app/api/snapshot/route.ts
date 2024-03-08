@@ -1,4 +1,5 @@
-import { describeImage } from "@/app/utils";
+import { describeImage, fetchLatestFromTigris } from "@/app/utils";
+import { inngest } from "@/inngest/client";
 import {
   GetObjectCommand,
   ListObjectsV2Command,
@@ -19,35 +20,18 @@ export type TigrisObject = {
 export type FilesResponse = Array<TigrisObject>;
 
 export async function POST() {
-  const listObjectsV2Command = new ListObjectsV2Command({
-    Bucket: process.env.BUCKET_NAME,
-    Prefix: `${process.env.COLLAGE_FOLER_NAME!}/`,
-  });
-  const resp = await client.send(listObjectsV2Command);
-  if (!resp.Contents || resp.Contents.length === 0) {
-    console.log("No files found.");
-    return;
-  }
-
-  const latestFile = resp.Contents.sort(
-    (a: any, b: any) => b.LastModified - a.LastModified
-  )[0];
-
-  if (!latestFile) {
-    console.log("No file found.");
-    return;
-  }
-
-  const getObjectCommand = new GetObjectCommand({
-    Bucket: process.env.BUCKET_NAME,
-    Key: latestFile.Key,
-  });
-
-  const url = await getSignedUrl(client, getObjectCommand, {
-    expiresIn: 3600,
-  });
-
+  const url = (await fetchLatestFromTigris()) || "";
+  console.log("url", url);
   const aiResponse = await describeImage(url);
+  console.log(aiResponse);
+  // if (aiResponse.content === "FALSE") {
+  //   await inngest.send({
+  //     name: "test/hello.world",
+  //     data: {
+  //       email: "testingAIresponse",
+  //     },
+  //   });
+  // }
 
   return Response.json(aiResponse);
 }
