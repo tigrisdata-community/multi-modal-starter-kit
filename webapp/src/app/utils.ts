@@ -16,6 +16,10 @@ const openai = new OpenAI({
 });
 const client = new S3Client();
 const resend = new Resend(process.env.RESEND_API_KEY);
+type LLMOutput = {
+  detected: string;
+  comment: string;
+};
 
 export async function fetchLatestFromTigris() {
   const listObjectsV2Command = new ListObjectsV2Command({
@@ -52,13 +56,33 @@ export async function fetchLatestFromTigris() {
   return url;
 }
 
+function isValidLLMOutput(output: string): boolean {
+  try {
+    const data: LLMOutput = JSON.parse(output);
+
+    // Check if the required fields are present and are of type string
+    if (typeof data.detected === "string" && typeof data.comment === "string") {
+      return true;
+    }
+    return false;
+  } catch (e) {
+    // If JSON parsing fails or any other error occurs
+    console.error(e);
+    return false;
+  }
+}
+
 export async function describeImage(url: string) {
   const chatCompletion = await openai.chat.completions.create({
     messages: [
       {
         role: "system",
         content: `
-              You are an AI assistant that can help me detect if there is a cat sitting on the cat bed. ONLY reply TRUE or FALSE.
+              You are an AI assistant that can help me detect if there is a cat sitting on the cat bed and add an elaborate comment describing what you see. Please make it funny!
+              ONLY reply a JSON format with the following structure. Make sure the JSON can be parsed by directedly passing into JSON.parse():              
+              "{detected: 'TRUE', comment: '[add description of what you are seeing]'}"
+
+              DO NOT include any other information before OR after the JSON. ONLY return a JSON object.
            `,
       },
       {
@@ -80,38 +104,34 @@ export async function describeImage(url: string) {
   });
   const content = chatCompletion.choices[0].message.content;
   console.log("AI Response", content);
-  const result = {
-    message: chatCompletion.choices[0].message,
-    url,
-    ts: Date.now(),
-  };
 
-  if (["TRUE", "FALSE"].includes(content || "")) {
+  if (isValidLLMOutput(content || "")) {
+    const result = { message: JSON.parse(content!), url, ts: Date.now() };
     inngest.send({
       name: "aiResponse.complete",
       data: { ...result },
     });
+
+    return result;
   } else {
     // inngest will auto retry
     throw new Error("OpenAI response does not conform to the expected format.");
   }
-
-  return result;
 }
 
-export async function notifyViaEmail(url: string) {
+export async function notifyViaEmail(url: string, message: string = "") {
   const { data, error } = await resend.emails.send({
     from: process.env.FROM_EMAIL!,
     to: [process.env.TO_EMAIL!],
     subject: "AI detection",
-    react: EmailTemplate({ url }),
+    react: EmailTemplate({ url, message }),
     html: "",
   });
 }
 
 export const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(1, "10 m"),
+  limiter: Ratelimit.slidingWindow(10, "10 m"),
   analytics: true,
   prefix: "@upstash/ratelimit",
 });

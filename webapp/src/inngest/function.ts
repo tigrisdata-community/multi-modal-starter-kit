@@ -35,9 +35,9 @@ export const sendEmail = inngest.createFunction(
   { event: "aiResponse.complete" },
   async ({ event, step }) => {
     const { success } = await ratelimit.limit("sendEmail");
-    if (success) {
+    if (success && event.data.message.detected === "TRUE") {
       console.log("sending an email!!");
-      await notifyViaEmail(event.data.url);
+      await notifyViaEmail(event.data.url, event.data.message.comment);
     }
   }
 );
