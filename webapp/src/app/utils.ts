@@ -16,6 +16,7 @@ const openai = new OpenAI({
 });
 const client = new S3Client();
 const resend = new Resend(process.env.RESEND_API_KEY);
+
 type LLMOutput = {
   detected: string;
   comment: string;
@@ -107,6 +108,7 @@ export async function describeImage(url: string) {
 
   if (isValidLLMOutput(content || "")) {
     const result = { message: JSON.parse(content!), url, ts: Date.now() };
+
     inngest.send({
       name: "aiResponse.complete",
       data: { ...result },
