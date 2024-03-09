@@ -19,7 +19,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function fetchLatestFromTigris() {
   const listObjectsV2Command = new ListObjectsV2Command({
-    Bucket: process.env.BUCKET_NAME,
+    Bucket: process.env.NEXT_PUBLIC_BUCKET_NAME,
     Prefix: process.env.COLLAGE_FOLER_NAME
       ? `${process.env.COLLAGE_FOLER_NAME!}/`
       : "",
@@ -58,7 +58,7 @@ export async function describeImage(url: string) {
       {
         role: "system",
         content: `
-              You are an AI assistant that can help me detect if there is a stuffed animal cat sitting on the cat bed. ONLY reply TRUE or FALSE.
+              You are an AI assistant that can help me detect if there is a cat sitting on the cat bed. ONLY reply TRUE or FALSE.
            `,
       },
       {
@@ -111,7 +111,7 @@ export async function notifyViaEmail(url: string) {
 
 export const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(3, "3 m"),
+  limiter: Ratelimit.slidingWindow(1, "10 m"),
   analytics: true,
   prefix: "@upstash/ratelimit",
 });
