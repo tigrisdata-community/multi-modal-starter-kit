@@ -1,6 +1,7 @@
 import { inngest } from "@/inngest/client";
 import {
   GetObjectCommand,
+  PutObjectCommand,
   ListObjectsV2Command,
   S3Client,
 } from "@aws-sdk/client-s3";
@@ -10,17 +11,143 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { Resend } from "resend";
 import { EmailTemplate } from "@/components/emailTemplate";
+import ffmpeg from "fluent-ffmpeg";
+import fetch from "node-fetch";
+import fs from "fs";
+import os from "os";
+import path from "path";
+import sharp from "sharp";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // This is the default and can be omitted
 });
 const client = new S3Client();
 const resend = new Resend(process.env.RESEND_API_KEY);
+const framesDir = path.join(process.cwd(), "static", "frames");
+const frameCollageDir = path.join(process.cwd(), "static", "collage");
+const frameRate = 10;
 
 type LLMOutput = {
   detected: string;
   comment: string;
 };
+
+export async function downloadVideo(url: string) {
+  const response = await fetch(url);
+  const buffer = await response.buffer();
+
+  const framesDir = path.join(process.cwd(), "static", "video");
+  const filePath = path.join(framesDir, "tmp.mp4");
+  try {
+    if (!fs.existsSync(framesDir)) {
+      fs.mkdirSync(framesDir, { recursive: true });
+    }
+
+    fs.writeFileSync(filePath, buffer);
+  } catch (e) {
+    console.error(e);
+  }
+  console.log("video downloaded: ", filePath);
+  return filePath;
+}
+
+export async function videoToFrames(filePath: string) {
+  if (!fs.existsSync(framesDir)) {
+    fs.mkdirSync(framesDir, { recursive: true });
+  }
+
+  if (!fs.existsSync(frameCollageDir)) {
+    fs.mkdirSync(frameCollageDir, { recursive: true });
+  }
+  return new Promise((resolve, reject) => {
+    ffmpeg(filePath)
+      .outputOptions([`-vf fps=1/${frameRate}`, `-vsync 0`, `-frame_pts 1`])
+      .output(`${framesDir}/frame-%04d.png`)
+      .on("end", () => {
+        console.log("Frame extraction completed.");
+        resolve("Done");
+      })
+      .on("progress", (progress) => {
+        console.log(`Processing video: ${progress.percent}% done`);
+      })
+      .on("error", (err) => {
+        console.error(`Error processing video: ${err.message}`);
+        reject(err);
+      })
+      .run();
+  });
+}
+
+export async function makeCollage(videoName: string) {
+  const files = fs.readdirSync(framesDir);
+  let result: string[] = [];
+  for (let i = 0; i < files.length; i += 6) {
+    const batch = files.slice(i, i + 6);
+    const collageUrl = await createCollage(batch, Math.floor(i / 6), videoName);
+    console.log("collageUrl", collageUrl);
+    result.push(collageUrl);
+  }
+  return result;
+}
+
+async function createCollage(
+  framesBatch: string[],
+  batchIndex: number,
+  videoName: string
+) {
+  const collageWidth = 600; // Width of one image in the collage
+  const collageHeight = 400; // Height of one image in the collage
+
+  let collage = sharp({
+    create: {
+      width: collageWidth * 3, // 3 images per row
+      height: collageHeight * 2, // 2 rows
+      channels: 4,
+      background: "white",
+    },
+  });
+
+  const composites = await Promise.all(
+    framesBatch.map(async (frame, index) => {
+      const imagePath = path.join(framesDir, frame);
+
+      const resizedImage = await sharp(imagePath)
+        .resize({
+          width: collageWidth,
+          fit: "cover",
+        })
+        .toBuffer();
+
+      return {
+        input: resizedImage,
+        top: Math.floor(index / 3) * collageHeight,
+        left: (index % 3) * collageWidth,
+      };
+    })
+  );
+
+  collage = collage.composite(composites);
+  const collageBuffer = await collage.jpeg().toBuffer();
+
+  const collageUrl = `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${videoName}/collage-${batchIndex + 1}.jpg`;
+  const tigrisParam = {
+    Bucket: process.env.NEXT_PUBLIC_BUCKET_NAME!,
+    Key: `${videoName}/collage-${batchIndex + 1}.jpg`,
+    Body: collageBuffer,
+    ContentType: "image/jpeg",
+  };
+
+  // For testing locally
+  // collage.toFile(path.join(frameCollageDir, `collage-${batchIndex + 1}.jpg`));
+
+  try {
+    await client.send(new PutObjectCommand(tigrisParam));
+    console.log("Collage saved to Tigris: ", collageUrl);
+  } catch (e) {
+    console.error("Failed to save collage: ", e);
+  }
+  return collageUrl;
+}
 
 export async function fetchLatestFromTigris() {
   const listObjectsV2Command = new ListObjectsV2Command({
@@ -73,7 +200,7 @@ function isValidLLMOutput(output: string): boolean {
   }
 }
 
-export async function describeImageForVideo(url: string) {
+export async function describeImageForVideo(url: string, context: string = "") {
   const chatCompletion = await openai.chat.completions.create({
     messages: [
       {
@@ -87,7 +214,11 @@ export async function describeImageForVideo(url: string) {
         content: [
           {
             type: "text",
-            text: `These are frames a camera stream consist of one to many pictures. Generate a compelling description of the image or a sequence of images: "`,
+            text: `These are frames a camera stream consist of one to many pictures. 
+            Generate a compelling description of the image or a sequence of images. 
+            Previously you have described other frames from the same video, here is what you said: ${context}. 
+            
+            Make your description unique and not repetitive please!. "`,
           },
           {
             type: "image_url",
@@ -99,6 +230,7 @@ export async function describeImageForVideo(url: string) {
     model: "gpt-4-vision-preview",
     max_tokens: 2048,
   });
+  console.log("AI Response: ", chatCompletion.choices[0].message.content);
   return chatCompletion.choices[0].message;
 }
 
