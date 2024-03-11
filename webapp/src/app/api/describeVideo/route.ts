@@ -12,10 +12,10 @@ export async function POST(req: NextRequest, res: NextResponse) {
   const videoName = data.key;
   // console.log("videoUrl", videoUrl);
 
-  const videoFilePath = await downloadVideo(videoUrl);
+  const videoFilePath = await downloadVideo(videoUrl, videoName);
 
   // frames are stored temporarily in webapp/static/frames
-  await videoToFrames(videoFilePath);
+  await videoToFrames(videoFilePath, videoName);
 
   const collageUrls: string[] = await makeCollage(videoName);
 

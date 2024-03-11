@@ -52,17 +52,51 @@ export default function Page({
     });
   }
 
-  function captureFrame() {
+  function calculateCaptureTimes(
+    currentTime: number,
+    interval: number,
+    countBefore: number, // # of frames before current time
+    countAfter: number // # of frames after current time
+  ): number[] {
+    const times = [];
+    if (currentTime < interval) {
+      // reset interval to be a reasonable slice if currentTime is too small
+      interval = currentTime / Math.ceil(countBefore + countAfter + 1);
+    }
+
+    const startTime = Math.max(currentTime - countBefore * interval, 0); // start time should not be negative
+
+    for (let i = 0; i < countBefore + countAfter + 1; i++) {
+      const time = startTime + i * interval;
+      if (time >= currentTime - countBefore * interval) {
+        times.push(time);
+      }
+    }
+
+    return times;
+  }
+
+  async function captureFrame() {
     if (canRef.current && vidRef.current) {
       vidRef.current.pause();
       const context = canRef.current.getContext("2d")!;
-      context.drawImage(vidRef.current, 0, 0, 640, 400);
-      const dataURL = canRef.current.toDataURL("image/jpeg", 1);
+      const currentTime = vidRef.current.currentTime;
+      const captureTimes = calculateCaptureTimes(currentTime, 5, 5, 0);
+      console.log("captureTimes", captureTimes);
+      let dataURLs: string[] = [];
+      for (const time of captureTimes) {
+        vidRef.current.currentTime = time;
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        context.drawImage(vidRef.current, 0, 0, 640, 400);
+        const dataURL = canRef.current.toDataURL("image/jpeg", 1);
+        dataURLs.push(dataURL);
+      }
+
       setShowSpinner(true);
       fetch(`/api/describe/`, {
         method: "POST",
         body: JSON.stringify({
-          frame: dataURL,
+          frames: dataURLs,
         }),
       }).then(async (response) => {
         setShowSpinner(false);
