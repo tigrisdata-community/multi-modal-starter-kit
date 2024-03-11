@@ -52,10 +52,40 @@ export default function Page({
     });
   }
 
-  function captureFrame() {
+  function calculateCaptureTimes(
+    currentTime: number,
+    interval: number,
+    countBefore: number, // # of frames before current time
+    countAfter: number // # of frames after current time
+  ): number[] {
+    const times = [];
+    const startTime = Math.max(currentTime - countBefore * interval, 0); // start time should not be negative
+
+    for (let i = 0; i < countBefore + countAfter + 1; i++) {
+      const time = startTime + i * interval;
+      if (time >= currentTime - countBefore * interval) {
+        times.push(time);
+      }
+    }
+
+    return times;
+  }
+
+  async function captureFrame() {
     if (canRef.current && vidRef.current) {
       vidRef.current.pause();
       const context = canRef.current.getContext("2d")!;
+      const currentTime = vidRef.current.currentTime;
+      const captureTimes = calculateCaptureTimes(currentTime, 10, 5, 0);
+      console.log("captureTimes", captureTimes);
+      for (const time of captureTimes) {
+        vidRef.current.currentTime = time;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        context.drawImage(vidRef.current, 0, 0, 640, 400);
+        const dataURL = canRef.current.toDataURL("image/jpeg", 1);
+        console.log("dataurl", time, dataURL);
+      }
+
       context.drawImage(vidRef.current, 0, 0, 640, 400);
       const dataURL = canRef.current.toDataURL("image/jpeg", 1);
       setShowSpinner(true);
