@@ -6,7 +6,7 @@ First, fork the repo and change to `webapp dir` to install dependencies:
 
 ```bash
 cd webapp
-npm run install
+npm install
 ```
 
 The project uses [Next.js](https://nextjs.org/docs) to load and display files
