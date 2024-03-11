@@ -1,9 +1,10 @@
-import { describeImageForVideo } from "@/app/utils";
+import { describeImageForVideo, createCollage } from "@/app/utils";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const videoUrl = (await req.json())["frame"];
+  const videoUrls = (await req.json())["frames"];
   console.log("querying openai for narration");
-  const aiResponse = await describeImageForVideo(videoUrl);
+  const collageUrl = await createCollage(videoUrls, 0, "test-video-name", true);
+  const aiResponse = await describeImageForVideo(collageUrl);
   return new Response(aiResponse.content);
 }

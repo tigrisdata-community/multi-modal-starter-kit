@@ -24,7 +24,7 @@ const openai = new OpenAI({
 const client = new S3Client();
 const resend = new Resend(process.env.RESEND_API_KEY);
 const framesDir = path.join(process.cwd(), "static", "frames");
-const frameCollageDir = path.join(process.cwd(), "static", "collage");
+const videoDir = path.join(process.cwd(), "static", "video");
 const frameRate = 10;
 
 type LLMOutput = {
@@ -32,37 +32,34 @@ type LLMOutput = {
   comment: string;
 };
 
-export async function downloadVideo(url: string) {
-  const response = await fetch(url);
-  const buffer = await response.buffer();
+export async function downloadVideo(url: string, videoName: string) {
+  const filePath = path.join(videoDir, videoName);
+  if (fs.existsSync(filePath)) {
+  } else {
+    fs.existsSync(videoDir) || fs.mkdirSync(videoDir, { recursive: true });
+    const response = await fetch(url);
+    const buffer = await response.buffer();
 
-  const framesDir = path.join(process.cwd(), "static", "video");
-  const filePath = path.join(framesDir, "tmp.mp4");
-  try {
-    if (!fs.existsSync(framesDir)) {
-      fs.mkdirSync(framesDir, { recursive: true });
+    try {
+      fs.writeFileSync(filePath, buffer);
+    } catch (e) {
+      console.error(e);
     }
-
-    fs.writeFileSync(filePath, buffer);
-  } catch (e) {
-    console.error(e);
+    console.log("video downloaded: ", filePath);
   }
-  console.log("video downloaded: ", filePath);
   return filePath;
 }
 
-export async function videoToFrames(filePath: string) {
-  if (!fs.existsSync(framesDir)) {
-    fs.mkdirSync(framesDir, { recursive: true });
+export async function videoToFrames(filePath: string, videoName: string) {
+  const framesFullPath = path.join(framesDir, videoName);
+  if (!fs.existsSync(framesFullPath)) {
+    fs.mkdirSync(framesFullPath, { recursive: true });
   }
 
-  if (!fs.existsSync(frameCollageDir)) {
-    fs.mkdirSync(frameCollageDir, { recursive: true });
-  }
   return new Promise((resolve, reject) => {
     ffmpeg(filePath)
       .outputOptions([`-vf fps=1/${frameRate}`, `-vsync 0`, `-frame_pts 1`])
-      .output(`${framesDir}/frame-%04d.png`)
+      .output(`${framesFullPath}/frame-%04d.png`)
       .on("end", () => {
         console.log("Frame extraction completed.");
         resolve("Done");
@@ -79,7 +76,8 @@ export async function videoToFrames(filePath: string) {
 }
 
 export async function makeCollage(videoName: string) {
-  const files = fs.readdirSync(framesDir);
+  const framesFullPath = path.join(framesDir, videoName);
+  const files = fs.readdirSync(framesFullPath);
   let result: string[] = [];
   for (let i = 0; i < files.length; i += 6) {
     const batch = files.slice(i, i + 6);
@@ -90,10 +88,11 @@ export async function makeCollage(videoName: string) {
   return result;
 }
 
-async function createCollage(
+export async function createCollage(
   framesBatch: string[],
   batchIndex: number,
-  videoName: string
+  videoName: string,
+  collageFromCapture: boolean = false // If true, the collage is created from the capture and frames are base64
 ) {
   const collageWidth = 600; // Width of one image in the collage
   const collageHeight = 400; // Height of one image in the collage
@@ -109,14 +108,29 @@ async function createCollage(
 
   const composites = await Promise.all(
     framesBatch.map(async (frame, index) => {
-      const imagePath = path.join(framesDir, frame);
+      let resizedImage;
+      if (collageFromCapture) {
+        const base64Data = frame.split(";base64,").pop();
+        if (!base64Data) {
+          throw new Error("Invalid Base64 image data");
+        }
+        const imageBuffer = Buffer.from(base64Data, "base64");
+        resizedImage = await sharp(imageBuffer)
+          .resize({
+            width: collageWidth,
+            fit: "cover",
+          })
+          .toBuffer();
+      } else {
+        const imagePath = path.join(framesDir, videoName, frame);
 
-      const resizedImage = await sharp(imagePath)
-        .resize({
-          width: collageWidth,
-          fit: "cover",
-        })
-        .toBuffer();
+        resizedImage = await sharp(imagePath)
+          .resize({
+            width: collageWidth,
+            fit: "cover",
+          })
+          .toBuffer();
+      }
 
       return {
         input: resizedImage,
@@ -128,11 +142,17 @@ async function createCollage(
 
   collage = collage.composite(composites);
   const collageBuffer = await collage.jpeg().toBuffer();
+  const collageTs = Date.now();
 
-  const collageUrl = `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${videoName}/collage-${batchIndex + 1}.jpg`;
+  const collageUrl = collageFromCapture
+    ? `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${videoName}/capture/${collageTs}.jpg`
+    : `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${videoName}/collage-${batchIndex + 1}.jpg`;
+
   const tigrisParam = {
     Bucket: process.env.NEXT_PUBLIC_BUCKET_NAME!,
-    Key: `${videoName}/collage-${batchIndex + 1}.jpg`,
+    Key: collageFromCapture
+      ? `${videoName}/capture/${collageTs}.jpg`
+      : `${videoName}/collage-${batchIndex + 1}.jpg`,
     Body: collageBuffer,
     ContentType: "image/jpeg",
   };
