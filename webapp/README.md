@@ -37,3 +37,15 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 Take a look at [GET api/files](src/app/api/files/route.ts) API that is used by [/files router](src/app/files/page.tsx) to list the objects from Tigris bucket.  
+
+## Voice Narration
+
+To add voice narration you will need an elevenlabs account. If you have that, simply add the following to `.env.development`
+
+NOTE! Right now eleven labs is only for local testing as it sends your private key to the front end. Do not host publicly until this is fixed!
+
+```bash
+NEXT_PUBLIC_XI_API_KEY=<XI access key>
+NEXT_PUBLIC_XI_VOICE_ID=<id of voice you want to use>
+
+```

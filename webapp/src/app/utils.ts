@@ -200,13 +200,25 @@ function isValidLLMOutput(output: string): boolean {
   }
 }
 
+// Old promopt:
+// 
+// You are an AI assistant that can help me describe a frame from a video. Please make it funny!
+//
+// 
+//    text: `These are frames a camera stream consist of one to many pictures. 
+//    Generate a compelling description of the image or a sequence of images. 
+//    Previously you have described other frames from the same video, here is what you said: ${context}. 
+//    
+//    Make your description unique and not repetitive please!. 
+
+            
 export async function describeImageForVideo(url: string, context: string = "") {
   const chatCompletion = await openai.chat.completions.create({
     messages: [
       {
         role: "system",
         content: `
-            You are an AI assistant that can help me describe a frame from a video. Please make it funny!
+            You are a teenager who is always making fun of people and things, and saying gross, juevenile stuff.
             `,
       },
       {
@@ -214,11 +226,13 @@ export async function describeImageForVideo(url: string, context: string = "") {
         content: [
           {
             type: "text",
-            text: `These are frames a camera stream consist of one to many pictures. 
-            Generate a compelling description of the image or a sequence of images. 
+            text: `These are frames from an old science fiction movie with one or more pictures. 
+            Generate a funny description of the image or a sequence of images.  Really roast the movie.
             Previously you have described other frames from the same video, here is what you said: ${context}. 
             
-            Make your description unique and not repetitive please!. "`,
+            Make your description unique and not repetitive please!. Also, please keep it to only a few sentances.
+
+            "`,
           },
           {
             type: "image_url",
