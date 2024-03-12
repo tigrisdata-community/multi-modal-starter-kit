@@ -32,7 +32,37 @@ export default function Page({
   const [showSpinner, setShowSpinner] = useState(false);
 
   useEffect(() => {
+    const fetchAndPlayTextToSpeech = async (narrationText: string) => {
+      console.log("current narration", narrationText);
+      if (!isEmpty(process.env.NEXT_PUBLIC_XI_API_KEY)) {
+        // Narrate with 11 labs
+
+        const escapestr = addslashes(narrationText);
+        const xi_api_key = process.env.NEXT_PUBLIC_XI_API_KEY;
+        const options = {
+          method: "POST",
+          headers: {
+            Accept: "audio/mpeg",
+            "Content-Type": "application/json",
+            "xi-api-key": process.env.NEXT_PUBLIC_XI_API_KEY!,
+          },
+          body: '{"model_id":"eleven_turbo_v2","text":"' + escapestr + '"}',
+        };
+
+        try {
+          const response = await fetch(
+            `https://api.elevenlabs.io/v1/text-to-speech/${process.env.NEXT_PUBLIC_XI_VOICE_ID}`,
+            options
+          );
+          await pAudio(response);
+        } catch (err) {
+          console.error("Error fetching text-to-speech:", err);
+        }
+      } // end if Narrate with 11 labs
+    };
+
     if (narration != "") {
+      fetchAndPlayTextToSpeech(narration);
       let incre = 0;
       const timeoutId = setInterval(() => {
         setEachNar(narration);
@@ -66,7 +96,7 @@ export default function Page({
       setShowSpinner(false);
       console.log(response);
       const restext: string[] = JSON.parse(await response.text());
-      const restextStr = restext.join("\n\n");
+      const restextStr = restext.join("");
       setNarration(restextStr);
     });
   }
@@ -122,30 +152,6 @@ export default function Page({
         vidRef.current!.play();
         const restext = await response.text();
         setNarration(restext);
-
-        if (!isEmpty(process.env.NEXT_PUBLIC_XI_API_KEY)) {
-          // Narrate with 11 labs
-
-          const escapestr = addslashes(restext);
-          const xi_api_key = process.env.NEXT_PUBLIC_XI_API_KEY;
-          const options = {
-            method: "POST",
-            headers: {
-              Accept: "audio/mpeg",
-              "Content-Type": "application/json",
-              "xi-api-key": process.env.NEXT_PUBLIC_XI_API_KEY!,
-            },
-            body: '{"model_id":"eleven_turbo_v2","text":"' + escapestr + '"}',
-          };
-
-          fetch(
-            "https://api.elevenlabs.io/v1/text-to-speech/" +
-              process.env.NEXT_PUBLIC_XI_VOICE_ID,
-            options
-          )
-            .then((response) => pAudio(response))
-            .catch((err) => console.error(err));
-        } // end if Narrate with 11 labs
       });
     }
   }
