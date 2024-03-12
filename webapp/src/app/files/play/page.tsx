@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchAndPlayTextToSpeech } from "@/app/actions";
 import { useEffect, useRef, useState } from "react";
 
 // Remove all " and ' when passing to eleven labs.
@@ -8,10 +9,8 @@ function addslashes(str: string) {
 }
 
 // Play audio from post response from 11 labs
-async function pAudio(response: Response) {
-  let blob = await response.blob();
-  let aurl = URL.createObjectURL(blob);
-  var audio = new Audio(aurl);
+async function pAudio(url: string) {
+  var audio = new Audio(url);
   audio.play();
 }
 
@@ -32,37 +31,16 @@ export default function Page({
   const [showSpinner, setShowSpinner] = useState(false);
 
   useEffect(() => {
-    const fetchAndPlayTextToSpeech = async (narrationText: string) => {
-      console.log("current narration", narrationText);
-      if (!isEmpty(process.env.NEXT_PUBLIC_XI_API_KEY)) {
-        // Narrate with 11 labs
-
-        const escapestr = addslashes(narrationText);
-        const xi_api_key = process.env.NEXT_PUBLIC_XI_API_KEY;
-        const options = {
-          method: "POST",
-          headers: {
-            Accept: "audio/mpeg",
-            "Content-Type": "application/json",
-            "xi-api-key": process.env.NEXT_PUBLIC_XI_API_KEY!,
-          },
-          body: '{"model_id":"eleven_turbo_v2","text":"' + escapestr + '"}',
-        };
-
-        try {
-          const response = await fetch(
-            `https://api.elevenlabs.io/v1/text-to-speech/${process.env.NEXT_PUBLIC_XI_VOICE_ID}`,
-            options
-          );
-          await pAudio(response);
-        } catch (err) {
-          console.error("Error fetching text-to-speech:", err);
+    const fetchData = async () => {
+      if (narration !== "") {
+        const response = await fetchAndPlayTextToSpeech(narration);
+        if (response) {
+          pAudio(response);
         }
-      } // end if Narrate with 11 labs
+      }
     };
 
-    if (narration != "") {
-      fetchAndPlayTextToSpeech(narration);
+    if (narration !== "") {
       let incre = 0;
       const timeoutId = setInterval(() => {
         setEachNar(narration);
@@ -71,6 +49,8 @@ export default function Page({
           clearTimeout(timeoutId);
         }
       }, 1000);
+      fetchData();
+
       return () => clearTimeout(timeoutId);
     }
   }, [narration]);
