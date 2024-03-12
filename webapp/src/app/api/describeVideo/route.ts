@@ -3,7 +3,7 @@ import {
   downloadVideo,
   makeCollage,
   describeImageForVideo,
-} from "@/app/utils";
+} from "@/utils/video";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest, res: NextResponse) {
@@ -22,8 +22,9 @@ export async function POST(req: NextRequest, res: NextResponse) {
   let context = "";
   let aiResponse = [];
   for (const collageUrl of collageUrls) {
-    const result = await describeImageForVideo(collageUrl);
-    aiResponse.push(result.content, context);
+    const result = await describeImageForVideo(collageUrl, context);
+    //TODO - should retry if OAI says it't can't help with the request
+    aiResponse.push(result.content);
     context += result.content + " ";
   }
   return NextResponse.json(aiResponse);

@@ -7,14 +7,10 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import OpenAI from "openai";
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
-import { Resend } from "resend";
-import { EmailTemplate } from "@/components/emailTemplate";
+
 import ffmpeg from "fluent-ffmpeg";
 import fetch from "node-fetch";
 import fs from "fs";
-import os from "os";
 import path from "path";
 import sharp from "sharp";
 
@@ -22,7 +18,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // This is the default and can be omitted
 });
 const client = new S3Client();
-const resend = new Resend(process.env.RESEND_API_KEY);
+
 const framesDir = path.join(process.cwd(), "static", "frames");
 const videoDir = path.join(process.cwd(), "static", "video");
 const frameRate = 10;
@@ -221,17 +217,16 @@ function isValidLLMOutput(output: string): boolean {
 }
 
 // Old promopt:
-// 
+//
 // You are an AI assistant that can help me describe a frame from a video. Please make it funny!
 //
-// 
-//    text: `These are frames a camera stream consist of one to many pictures. 
-//    Generate a compelling description of the image or a sequence of images. 
-//    Previously you have described other frames from the same video, here is what you said: ${context}. 
-//    
-//    Make your description unique and not repetitive please!. 
+//
+//    text: `These are frames a camera stream consist of one to many pictures.
+//    Generate a compelling description of the image or a sequence of images.
+//    Previously you have described other frames from the same video, here is what you said: ${context}.
+//
+//    Make your description unique and not repetitive please!.
 
-            
 export async function describeImageForVideo(url: string, context: string = "") {
   const chatCompletion = await openai.chat.completions.create({
     messages: [
@@ -315,20 +310,3 @@ export async function describeImage(url: string) {
     throw new Error("OpenAI response does not conform to the expected format.");
   }
 }
-
-export async function notifyViaEmail(url: string, message: string = "") {
-  const { data, error } = await resend.emails.send({
-    from: process.env.FROM_EMAIL!,
-    to: [process.env.TO_EMAIL!],
-    subject: "AI detection",
-    react: EmailTemplate({ url, message }),
-    html: "",
-  });
-}
-
-export const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(10, "10 m"),
-  analytics: true,
-  prefix: "@upstash/ratelimit",
-});

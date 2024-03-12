@@ -3,20 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 
 // Remove all " and ' when passing to eleven labs.
-function addslashes( str ) {
-  return (str + '').replaceAll('"','').replaceAll("'","")
+function addslashes(str: string) {
+  return (str + "").replaceAll('"', "").replaceAll("'", "");
 }
 
-// Play audio from post response from 11 labs 
-async function pAudio(response){
+// Play audio from post response from 11 labs
+async function pAudio(response: Response) {
   let blob = await response.blob();
   let aurl = URL.createObjectURL(blob);
   var audio = new Audio(aurl);
   audio.play();
 }
 
-function isEmpty(val){
-  return (val === undefined || val == null || val.length <= 0) ? true : false;
+function isEmpty(val: string | undefined | null) {
+  return val === undefined || val == null || val.length <= 0 ? true : false;
 }
 
 export default function Page({
@@ -65,8 +65,9 @@ export default function Page({
     }).then(async (response) => {
       setShowSpinner(false);
       console.log(response);
-      const restext = await response.text();
-      setNarration(restext);
+      const restext: string[] = JSON.parse(await response.text());
+      const restextStr = restext.join("\n\n");
+      setNarration(restextStr);
     });
   }
 
@@ -122,28 +123,30 @@ export default function Page({
         const restext = await response.text();
         setNarration(restext);
 
+        if (!isEmpty(process.env.NEXT_PUBLIC_XI_API_KEY)) {
+          // Narrate with 11 labs
 
-          if (!isEmpty(process.env.NEXT_PUBLIC_XI_API_KEY)) {
-            // Narrate with 11 labs
+          const escapestr = addslashes(restext);
+          const xi_api_key = process.env.NEXT_PUBLIC_XI_API_KEY;
+          const options = {
+            method: "POST",
+            headers: {
+              Accept: "audio/mpeg",
+              "Content-Type": "application/json",
+              "xi-api-key": process.env.NEXT_PUBLIC_XI_API_KEY!,
+            },
+            body: '{"model_id":"eleven_turbo_v2","text":"' + escapestr + '"}',
+          };
 
-            const escapestr = addslashes(restext);
-            const xi_api_key = process.env.NEXT_PUBLIC_XI_API_KEY;
-            const options = {
-              method: 'POST',
-              headers: {
-                "Accept": "audio/mpeg",
-                "Content-Type": "application/json",
-                "xi-api-key": process.env.NEXT_PUBLIC_XI_API_KEY
-              },
-              body: '{"model_id":"eleven_turbo_v2","text":"' + escapestr + '"}',
-            };
-
-            fetch('https://api.elevenlabs.io/v1/text-to-speech/' + process.env.NEXT_PUBLIC_XI_VOICE_ID, options)
-              .then(response => pAudio(response))
-              .catch(err => console.error(err));
-          } // end if Narrate with 11 labs
-
-        });
+          fetch(
+            "https://api.elevenlabs.io/v1/text-to-speech/" +
+              process.env.NEXT_PUBLIC_XI_VOICE_ID,
+            options
+          )
+            .then((response) => pAudio(response))
+            .catch((err) => console.error(err));
+        } // end if Narrate with 11 labs
+      });
     }
   }
 

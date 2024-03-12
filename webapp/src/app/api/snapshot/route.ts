@@ -1,4 +1,4 @@
-import { describeImage, fetchLatestFromTigris } from "@/app/utils";
+import { describeImage, fetchLatestFromTigris } from "@/utils/video";
 
 export const dynamic = "force-dynamic";
 

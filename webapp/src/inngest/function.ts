@@ -1,9 +1,6 @@
-import {
-  describeImage,
-  fetchLatestFromTigris,
-  ratelimit,
-  notifyViaEmail,
-} from "@/app/utils";
+import { describeImage, fetchLatestFromTigris } from "@/utils/video";
+import { notifyViaEmail } from "@/app/email";
+import { ratelimit } from "@/app/ratelimit";
 import { inngest } from "./client";
 
 export const inngestTick = inngest.createFunction(
