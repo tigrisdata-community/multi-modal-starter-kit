@@ -1,4 +1,4 @@
-import { describeImageForVideo, createCollage } from "@/app/utils";
+import { describeImageForVideo, createCollage } from "@/utils/video";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
