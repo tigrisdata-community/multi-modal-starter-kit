@@ -66,19 +66,44 @@ export default function Page({
 
   async function describeVideo() {
     setShowSpinner(true);
-    await fetch(`/api/describeVideo/`, {
-      method: "POST",
-      body: JSON.stringify({
-        url: videoUrl,
-        key: searchParams.name,
-      }),
-    }).then(async (response) => {
+    const queryParams = new URLSearchParams({
+      url: videoUrl,
+      key: searchParams.name,
+    }).toString();
+    const eventSource = new EventSource("/api/describeVideo?" + queryParams);
+
+    eventSource.onopen = (event) => {
+      console.log("EventSource opened:", event);
+    };
+    eventSource.onmessage = (event) => {
+      // Parse the incoming data
+      const data = event.data;
+      console.log("data", data);
+      // if (data === "done") {
+      //   setShowSpinner(false);
+      //   eventSource.close();
+      // }
+    };
+
+    eventSource.onerror = (event) => {
+      console.error("EventSource failed:", event);
       setShowSpinner(false);
-      console.log(response);
-      const restext: string[] = JSON.parse(await response.text());
-      const restextStr = restext.join("");
-      setNarration(restextStr);
-    });
+      eventSource.close();
+    };
+
+    // await fetch(`/api/describeVideo/`, {
+    //   method: "POST",
+    //   body: JSON.stringify({
+    //     url: videoUrl,
+    //     key: searchParams.name,
+    //   }),
+    // }).then(async (response) => {
+    //   setShowSpinner(false);
+    //   console.log(response);
+    //   const restext: string[] = JSON.parse(await response.text());
+    //   const restextStr = restext.join("");
+    //   setNarration(restextStr);
+    // });
   }
 
   function calculateCaptureTimes(
