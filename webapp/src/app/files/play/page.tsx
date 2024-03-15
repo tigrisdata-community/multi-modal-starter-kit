@@ -64,32 +64,37 @@ export default function Page({
     }
   };
 
+  let eventSource: any = null;
+
   async function describeVideo() {
     setShowSpinner(true);
     const queryParams = new URLSearchParams({
       url: videoUrl,
       key: searchParams.name,
     }).toString();
-    const eventSource = new EventSource("/api/describeVideo?" + queryParams);
+    if (!eventSource || eventSource.readyState === EventSource.CLOSED) {
+      console.log("event source does not exist. Creating...");
+      eventSource = new EventSource("/api/describeVideo?" + queryParams);
+      console.log("ready state: ", eventSource.readyState);
 
-    eventSource.onopen = (event) => {
-      console.log("EventSource opened:", event);
-    };
-    eventSource.onmessage = (event) => {
-      // Parse the incoming data
-      const data = event.data;
-      console.log("data", data);
-      // if (data === "done") {
-      //   setShowSpinner(false);
-      //   eventSource.close();
-      // }
-    };
+      eventSource.addEventListener("message", (event: any) => {
+        const tmp = JSON.parse(event.data);
+        setShowSpinner(false);
+        setNarration(narration + " " + tmp.message);
+        console.log("event message", tmp.message);
+      });
 
-    eventSource.onerror = (event) => {
-      console.error("EventSource failed:", event);
-      setShowSpinner(false);
-      eventSource.close();
-    };
+      eventSource.addEventListener("error", (e: Error) => {
+        console.log("event error", e);
+        eventSource.close();
+      });
+      // As soon as SSE API source is closed, attempt to reconnect
+      eventSource.addEventListener("close", () => {
+        console.log("event close");
+      });
+    } else {
+      console.log("event source already exists");
+    }
 
     // await fetch(`/api/describeVideo/`, {
     //   method: "POST",
@@ -104,6 +109,7 @@ export default function Page({
     //   const restextStr = restext.join("");
     //   setNarration(restextStr);
     // });
+    //return () => eventSource.close();
   }
 
   function calculateCaptureTimes(

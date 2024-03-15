@@ -15,6 +15,7 @@
     "@upstash/ratelimit": "^1.0.1",
     "fluent-ffmpeg": "^2.1.2",
     "inngest": "^3.15.5",
+    "ioredis": "^5.3.2",
     "next": "14.1.0",
     "openai": "^4.28.4",
     "react": "^18",

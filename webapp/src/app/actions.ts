@@ -4,6 +4,9 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const client = new S3Client();
 
+const audioQueue = [];
+let isPlaying = false;
+
 export async function fetchAndPlayTextToSpeech(narrationText: string) {
   console.log("current narration", narrationText);
   if (!isEmpty(process.env.XI_API_KEY)) {

@@ -13,6 +13,7 @@ import fetch from "node-fetch";
 import fs from "fs";
 import path from "path";
 import sharp from "sharp";
+import { Redis } from "@upstash/redis";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // This is the default and can be omitted
@@ -27,6 +28,21 @@ type LLMOutput = {
   detected: string;
   comment: string;
 };
+
+export async function publishNotification(channel: string, message: string) {
+  const redis = Redis.fromEnv();
+
+  // Extract the message in the form submitted
+
+  await redis.publish(
+    channel,
+    JSON.stringify({
+      channel,
+      message,
+      date: new Date().toString(),
+    })
+  );
+}
 
 export async function downloadVideo(url: string, videoName: string) {
   const filePath = path.join(videoDir, videoName);

@@ -9,19 +9,42 @@ import {
   downloadVideo,
   makeCollage,
   describeImageForVideo,
+  publishNotification,
 } from "@/utils/video";
 import { write } from "fs";
 import { NextApiRequest, NextApiResponse } from "next";
 import { NextRequest, NextResponse } from "next/server";
+// Use ioredis to subscribe
+import Redis from "ioredis";
+const redisSubscriber = new Redis(process.env.UPSTASH_REDIS_URL!);
 
-export async function GET(req: NextRequest, res: NextResponse) {
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const setKey = "ai-responses";
+
+export async function GET(req: NextRequest) {
   const videoUrl: string = req.nextUrl.searchParams.get("url")!;
   const videoName: string = req.nextUrl.searchParams.get("key")!;
-  console.log("videoUrl", videoUrl);
 
-  let responseStream = new TransformStream();
-  const writer = responseStream.writable.getWriter();
   const encoder = new TextEncoder();
+  const customReadable = new ReadableStream({
+    start(controller) {
+      redisSubscriber.subscribe(setKey, (err) => {
+        if (err) console.log(err);
+      });
+
+      redisSubscriber.on("message", (channel, message) => {
+        console.log("redis message", message, channel);
+        if (channel === setKey)
+          controller.enqueue(encoder.encode(`data: ${message}\n\n`));
+      });
+      redisSubscriber.on("end", () => {
+        controller.close();
+      });
+    },
+  });
 
   // const videoFilePath = await downloadVideo(videoUrl, videoName);
 
@@ -29,35 +52,47 @@ export async function GET(req: NextRequest, res: NextResponse) {
   // await videoToFrames(videoFilePath, videoName);
 
   // const collageUrls: string[] = await makeCollage(videoName);
+  await publishNotification(setKey, "Start!");
 
   let context = "";
   let aiResponse = [];
-  writer.write(encoder.encode("data: " + "1 " + "\n\n"));
-  const delay = (ms: number) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
-  await delay(2000);
-  writer.write(encoder.encode("data: " + "2 " + "\n\n"));
 
   for (const collageUrl of [
     "https://cat-detector.fly.storage.tigris.dev/test-video.mp4/collage-2.jpg",
   ]) {
     const result = await describeImageForVideo(collageUrl, context);
-    //TODO - should retry if OAI says it't can't help with the request
+    await publishNotification(setKey, result.content || "");
     aiResponse.push(result.content);
-    writer.write(encoder.encode("data:" + result.content + " " + "\n\n"));
     context += result.content + " ";
   }
-  writer.write(encoder.encode("done\n\n"));
-  writer.close();
-  // return NextResponse.json(aiResponse);
 
-  return new Response(responseStream.readable, {
+  return new Response(customReadable, {
     headers: {
       "Content-Type": "text/event-stream",
-      Connection: "keep-alive",
       "Cache-Control": "no-cache, no-transform",
-      "X-Accel-Buffering": "no",
-      "Content-Encoding": "none",
     },
   });
 }
+
+// export async function GET(req: NextRequest, res: NextResponse) {
+
+//   const encoder = new TextEncoder();
+//   const customReadable = new ReadableStream({
+//     start(controller) {
+//       const message = "Hey, I am a message.";
+//       controller.enqueue(encoder.encode(`data: ${message}\n\n`));
+//     },
+//   });
+//   console.log("videoUrl", videoUrl);
+
+//   // return NextResponse.json(aiResponse);
+
+//   return new Response(customReadable, {
+//     headers: {
+//       Connection: "keep-alive",
+//       "Content-Encoding": "none",
+//       "Cache-Control": "no-cache, no-transform",
+//       "Content-Type": "text/event-stream; charset=utf-8",
+//     },
+//   });
+// }
