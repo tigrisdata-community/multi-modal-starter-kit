@@ -1,7 +1,7 @@
 "use client";
 
 import { fetchAndPlayTextToSpeech } from "@/app/actions";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // Remove all " and ' when passing to eleven labs.
 function addslashes(str: string) {
@@ -29,8 +29,41 @@ export default function Page({
   const [narration, setNarration] = useState("");
   const [eachNar, setEachNar] = useState("");
   const [showSpinner, setShowSpinner] = useState(false);
+  const [eventSource, setEventSource] = useState<any>(null);
+  const initialized = useRef(false);
+
+  const connectToStream = useCallback(() => {
+    const eventSource = new EventSource("/api/stream");
+    console.log("ready state: ", eventSource.readyState);
+
+    eventSource.addEventListener("message", (event: any) => {
+      const tmp = JSON.parse(event.data);
+      setShowSpinner(false);
+      setNarration(narration + " " + tmp.message);
+      console.log("event message", tmp.message);
+    });
+
+    eventSource.addEventListener("error", (e: any) => {
+      console.log("event error", e);
+      eventSource.close();
+      setTimeout(connectToStream, 1);
+    });
+    // As soon as SSE API source is closed, attempt to reconnect
+    eventSource.addEventListener("close", () => {
+      console.log("event close");
+      setTimeout(connectToStream, 1);
+    });
+    return eventSource;
+  }, [narration]);
 
   useEffect(() => {
+    console.log("eventSource", eventSource);
+    if (!initialized.current) {
+      const es = connectToStream();
+      setEventSource(es);
+      initialized.current = true;
+    }
+
     const fetchData = async () => {
       if (narration !== "") {
         const response = await fetchAndPlayTextToSpeech(narration);
@@ -51,9 +84,11 @@ export default function Page({
       }, 1000);
       fetchData();
 
-      return () => clearTimeout(timeoutId);
+      return () => {
+        clearTimeout(timeoutId);
+      };
     }
-  }, [narration]);
+  }, [narration, eventSource, connectToStream]);
 
   const vidRef = useRef<HTMLVideoElement>(null);
   const canRef = useRef<HTMLCanvasElement>(null);
@@ -64,52 +99,23 @@ export default function Page({
     }
   };
 
-  let eventSource: any = null;
-
   async function describeVideo() {
     setShowSpinner(true);
-    const queryParams = new URLSearchParams({
-      url: videoUrl,
-      key: searchParams.name,
-    }).toString();
-    if (!eventSource || eventSource.readyState === EventSource.CLOSED) {
-      console.log("event source does not exist. Creating...");
-      eventSource = new EventSource("/api/describeVideo?" + queryParams);
-      console.log("ready state: ", eventSource.readyState);
 
-      eventSource.addEventListener("message", (event: any) => {
-        const tmp = JSON.parse(event.data);
-        setShowSpinner(false);
-        setNarration(narration + " " + tmp.message);
-        console.log("event message", tmp.message);
-      });
-
-      eventSource.addEventListener("error", (e: Error) => {
-        console.log("event error", e);
-        eventSource.close();
-      });
-      // As soon as SSE API source is closed, attempt to reconnect
-      eventSource.addEventListener("close", () => {
-        console.log("event close");
-      });
-    } else {
-      console.log("event source already exists");
-    }
-
-    // await fetch(`/api/describeVideo/`, {
-    //   method: "POST",
-    //   body: JSON.stringify({
-    //     url: videoUrl,
-    //     key: searchParams.name,
-    //   }),
-    // }).then(async (response) => {
-    //   setShowSpinner(false);
-    //   console.log(response);
-    //   const restext: string[] = JSON.parse(await response.text());
-    //   const restextStr = restext.join("");
-    //   setNarration(restextStr);
-    // });
-    //return () => eventSource.close();
+    await fetch(`/api/describeVideo/`, {
+      method: "POST",
+      body: JSON.stringify({
+        url: videoUrl,
+        key: searchParams.name,
+      }),
+    }).then(async (response) => {
+      setShowSpinner(false);
+      console.log(response);
+      const restext: string[] = JSON.parse(await response.text());
+      const restextStr = restext.join("");
+      setNarration(restextStr);
+    });
+    return;
   }
 
   function calculateCaptureTimes(
