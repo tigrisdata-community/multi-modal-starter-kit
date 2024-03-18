@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
 
   for (const collageUrl of [
     "https://cat-detector.fly.storage.tigris.dev/test-video.mp4/collage-2.jpg",
+    "https://cat-detector.fly.storage.tigris.dev/test-video.mp4/collage-3.jpg",
   ]) {
     const result = await describeImageForVideo(collageUrl, context);
     await publishNotification(setKey, result.content || "");

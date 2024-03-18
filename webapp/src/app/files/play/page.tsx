@@ -26,8 +26,8 @@ export default function Page({
   };
 }) {
   const videoUrl: string = `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${searchParams.name}`;
-  const [narration, setNarration] = useState("");
-  const [eachNar, setEachNar] = useState("");
+  const [narration, setNarration] = useState<string[]>([]);
+  const [eachNar, setEachNar] = useState<string[]>([]);
   const [showSpinner, setShowSpinner] = useState(false);
   const [eventSource, setEventSource] = useState<any>(null);
   const initialized = useRef(false);
@@ -36,11 +36,14 @@ export default function Page({
     const eventSource = new EventSource("/api/stream");
     console.log("ready state: ", eventSource.readyState);
 
-    eventSource.addEventListener("message", (event: any) => {
+    eventSource.addEventListener("message", (event) => {
       const tmp = JSON.parse(event.data);
       setShowSpinner(false);
-      setNarration(narration + " " + tmp.message);
-      console.log("event message", tmp.message);
+      const updatedNarration = [...narration, tmp.message];
+      console.log("updatedNarration", updatedNarration);
+      setNarration(updatedNarration);
+      console.log("narration: ", narration);
+      //console.log("event message", tmp.message);
     });
 
     eventSource.addEventListener("error", (e: any) => {
@@ -64,16 +67,16 @@ export default function Page({
       initialized.current = true;
     }
 
-    const fetchData = async () => {
-      if (narration !== "") {
-        const response = await fetchAndPlayTextToSpeech(narration);
-        if (response) {
-          pAudio(response);
-        }
-      }
-    };
+    // const queueAudio = async () => {
+    //   if (narration.length !== 0) {
+    //     const response = await fetchAndPlayTextToSpeech(narration);
+    //     if (response) {
+    //       pAudio(response);
+    //     }
+    //   }
+    // };
 
-    if (narration !== "") {
+    if (narration.length !== 0) {
       let incre = 0;
       const timeoutId = setInterval(() => {
         setEachNar(narration);
@@ -82,7 +85,7 @@ export default function Page({
           clearTimeout(timeoutId);
         }
       }, 1000);
-      fetchData();
+      // queueAudio();
 
       return () => {
         clearTimeout(timeoutId);
@@ -113,7 +116,8 @@ export default function Page({
       console.log(response);
       const restext: string[] = JSON.parse(await response.text());
       const restextStr = restext.join("");
-      setNarration(restextStr);
+      const updatedNarration = [...narration, restextStr];
+      setNarration(updatedNarration);
     });
     return;
   }
@@ -168,7 +172,8 @@ export default function Page({
         setShowSpinner(false);
         vidRef.current!.play();
         const restext = await response.text();
-        setNarration(restext);
+        const updatedNarration = [...narration, restext];
+        setNarration(updatedNarration);
       });
     }
   }
@@ -206,7 +211,7 @@ export default function Page({
         </div>
 
         <h3>Narration using GPT 4 vision:</h3>
-        <p>{eachNar}</p>
+        <p>{eachNar.join("\n")}</p>
 
         {showSpinner && (
           <div className="lds-ellipsis">
