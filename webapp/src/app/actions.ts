@@ -26,6 +26,11 @@ export async function fetchAndPlayTextToSpeech(narrationText: string) {
         options
       );
 
+      if (response.status !== 200) {
+        console.error("Unable to create elevenlabs audio. Error: " + response);
+        return;
+      }
+
       const blob = await response.blob();
       const ts = new Date().getTime();
       const arrayBuffer = await blob.arrayBuffer();
