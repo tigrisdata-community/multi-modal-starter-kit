@@ -9,7 +9,8 @@ export async function fetchAndPlayTextToSpeech(narrationText: string) {
   if (!isEmpty(process.env.XI_API_KEY)) {
     // Narrate with 11 labs
 
-    const escapestr = addslashes(narrationText);
+    const escapestr = addslashes("test!");
+    //const escapestr = addslashes(narrationText);
     const options = {
       method: "POST",
       headers: {

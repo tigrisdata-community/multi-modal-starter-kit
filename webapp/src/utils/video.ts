@@ -15,6 +15,8 @@ import path from "path";
 import sharp from "sharp";
 
 const openai = new OpenAI({
+  // baseURL: "http://localhost:11434/v1",
+  // apiKey: "ollama",
   apiKey: process.env.OPENAI_API_KEY, // This is the default and can be omitted
 });
 const client = new S3Client();
