@@ -10,7 +10,6 @@ export async function POST(req: NextRequest, res: NextResponse) {
   const data = await req.json();
   const videoUrl = data.url;
   const videoName = data.key;
-  // console.log("videoUrl", videoUrl);
 
   const videoFilePath = await downloadVideo(videoUrl, videoName);
 

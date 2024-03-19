@@ -269,7 +269,7 @@ export async function describeImageForVideo(url: string, context: string = "") {
         },
       ],
     });
-
+    console.log("Ollama (Llava) Response: ", response.message);
     return response.message;
   } else {
     const chatCompletion = await openai.chat.completions.create({
@@ -303,6 +303,7 @@ export async function describeImageForVideo(url: string, context: string = "") {
   }
 }
 
+// TODO - this is for testing out Inngest
 export async function describeImage(url: string) {
   const chatCompletion = await openai.chat.completions.create({
     messages: [
