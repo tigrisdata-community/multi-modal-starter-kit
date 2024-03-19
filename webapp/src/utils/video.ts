@@ -13,6 +13,8 @@ import fetch from "node-fetch";
 import fs from "fs";
 import path from "path";
 import sharp from "sharp";
+import ollama from "ollama";
+import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 
 const openai = new OpenAI({
   // baseURL: "http://localhost:11434/v1",
@@ -20,6 +22,10 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // This is the default and can be omitted
 });
 const client = new S3Client();
+const useOllama = process.env.USE_OLLAMA === "true";
+
+//TODO - for debugging
+//const tmpDir = path.join(process.cwd(), "static", "tmp");
 
 const framesDir = path.join(process.cwd(), "static", "frames");
 const videoDir = path.join(process.cwd(), "static", "video");
@@ -229,40 +235,72 @@ function isValidLLMOutput(output: string): boolean {
 //
 //    Make your description unique and not repetitive please!.
 
-export async function describeImageForVideo(url: string, context: string = "") {
-  const chatCompletion = await openai.chat.completions.create({
-    messages: [
-      {
-        role: "system",
-        content: `
-            You are a teenager who is always making fun of people and things, and saying gross, juevenile stuff.
-            `,
-      },
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: `These are frames from an old science fiction movie with one or more pictures. 
-            Generate a funny description of the image or a sequence of images.  Really roast the movie.
-            Previously you have described other frames from the same video, here is what you said: ${context}. 
-            
-            Make your description unique and not repetitive please!. Also, please keep it to only a few sentances.
+export default async function toBase64ImageUrl(
+  imgUrl: string
+): Promise<string> {
+  const fetchImageUrl = await fetch(imgUrl);
+  const responseArrBuffer = await fetchImageUrl.arrayBuffer();
+  //data:${fetchImageUrl.headers.get("Content-Type") || "image/png"};base64,$
+  const toBase64 = `${Buffer.from(responseArrBuffer).toString("base64")}`;
+  return toBase64;
+}
 
-            "`,
-          },
-          {
-            type: "image_url",
-            image_url: { url: url },
-          },
-        ],
-      },
-    ],
-    model: "gpt-4-vision-preview",
-    max_tokens: 2048,
-  });
-  console.log("AI Response: ", chatCompletion.choices[0].message.content);
-  return chatCompletion.choices[0].message;
+export async function describeImageForVideo(url: string, context: string = "") {
+  const systemPrompt: ChatCompletionMessageParam = {
+    role: "system",
+    content: `
+      You are a teenager who is always making fun of people and things, and saying gross, juevenile stuff.
+      `,
+  };
+
+  if (useOllama) {
+    const response = await ollama.chat({
+      model: "llava",
+      messages: [
+        systemPrompt,
+        {
+          role: "user",
+          content: `These are frames from an old science fiction movie with one or more pictures. 
+          Generate a funny description of the image or a sequence of images.  Really roast the movie.
+          Previously you have described other frames from the same video, here is what you said: ${context}. 
+          
+          Make your description unique and not repetitive please!. Also, please keep it to only a few sentances.`,
+          images: [await toBase64ImageUrl(url)],
+        },
+      ],
+    });
+
+    return response.message;
+  } else {
+    const chatCompletion = await openai.chat.completions.create({
+      messages: [
+        systemPrompt,
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `These are frames from an old science fiction movie with one or more pictures. 
+          Generate a funny description of the image or a sequence of images.  Really roast the movie.
+          Previously you have described other frames from the same video, here is what you said: ${context}. 
+          
+          Make your description unique and not repetitive please!. Also, please keep it to only a few sentances.
+  
+          "`,
+            },
+            {
+              type: "image_url",
+              image_url: { url: url },
+            },
+          ],
+        },
+      ],
+      model: "gpt-4-vision-preview",
+      max_tokens: 2048,
+    });
+    console.log("AI Response: ", chatCompletion.choices[0].message.content);
+    return chatCompletion.choices[0].message;
+  }
 }
 
 export async function describeImage(url: string) {
