@@ -9,8 +9,7 @@ export async function fetchAndPlayTextToSpeech(narrationText: string) {
   if (!isEmpty(process.env.XI_API_KEY)) {
     // Narrate with 11 labs
 
-    const escapestr = addslashes("test!");
-    //const escapestr = addslashes(narrationText);
+    const escapestr = addslashes(narrationText);
     const options = {
       method: "POST",
       headers: {
@@ -26,6 +25,11 @@ export async function fetchAndPlayTextToSpeech(narrationText: string) {
         `https://api.elevenlabs.io/v1/text-to-speech/${process.env.XI_VOICE_ID!}`,
         options
       );
+
+      if (response.status !== 200) {
+        console.error("Unable to create elevenlabs audio. Error: " + response);
+        return;
+      }
 
       const blob = await response.blob();
       const ts = new Date().getTime();
