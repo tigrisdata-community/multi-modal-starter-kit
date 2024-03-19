@@ -19,6 +19,7 @@ For vision model by default the app uses GPT4v, but there's also an option to ru
 - [Install Ollama](https://ollama.com/download)
 - `ollama pull llava`
 - in your .env, set `USE_OLLAMA=true`
+- (optional) Watch requests coming into Ollama by running this in a new terminal tab `tail -f ~/.ollama/logs/server.log`
 
 ### Raspberry Pi setup
 

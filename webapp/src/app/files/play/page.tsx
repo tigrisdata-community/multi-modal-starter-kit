@@ -1,12 +1,8 @@
 "use client";
 
 import { fetchAndPlayTextToSpeech } from "@/app/actions";
-import { useEffect, useRef, useState } from "react";
-
-// Remove all " and ' when passing to eleven labs.
-function addslashes(str: string) {
-  return (str + "").replaceAll('"', "").replaceAll("'", "");
-}
+import React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // Play audio from post response from 11 labs
 async function pAudio(url: string) {
@@ -26,34 +22,59 @@ export default function Page({
   };
 }) {
   const videoUrl: string = `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${searchParams.name}`;
-  const [narration, setNarration] = useState("");
-  const [eachNar, setEachNar] = useState("");
+  const [narration, setNarration] = useState<string[]>([]);
   const [showSpinner, setShowSpinner] = useState(false);
 
+  const [eventSource, setEventSource] = useState<any>(null);
+  const initialized = useRef(false);
+
+  const connectToStream = useCallback(() => {
+    const eventSource = new EventSource("/api/stream");
+    console.log("ready state: ", eventSource.readyState);
+
+    eventSource.addEventListener("message", (event) => {
+      const tmp = JSON.parse(event.data);
+      if (tmp.message === "END") {
+        setShowSpinner(false);
+        return;
+      }
+      console.log("data: ", tmp);
+
+      setNarration((currentNarration) => [...currentNarration, tmp.message]);
+      //console.log("event message", tmp.message);
+    });
+
+    eventSource.addEventListener("error", (e: any) => {
+      console.log("event error", e);
+      eventSource.close();
+      setTimeout(connectToStream, 1);
+    });
+    // As soon as SSE API source is closed, attempt to reconnect
+    eventSource.addEventListener("close", () => {
+      console.log("event close");
+      setTimeout(connectToStream, 1);
+    });
+    return eventSource;
+  }, []);
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (narration !== "") {
-        const response = await fetchAndPlayTextToSpeech(narration);
+    console.log("narration = ", narration);
+    if (!initialized.current) {
+      const es = connectToStream();
+      setEventSource(es);
+      initialized.current = true;
+    }
+
+    const queueAudio = async () => {
+      if (narration.length === 0) {
+        // TODO - this needs to be fixed. just testing
+        const response = await fetchAndPlayTextToSpeech(narration[0]);
         if (response) {
           pAudio(response);
         }
       }
     };
-
-    if (narration !== "") {
-      let incre = 0;
-      const timeoutId = setInterval(() => {
-        setEachNar(narration);
-        incre++;
-        if (incre >= narration.length) {
-          clearTimeout(timeoutId);
-        }
-      }, 1000);
-      fetchData();
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [narration]);
+  }, [narration, eventSource, connectToStream]);
 
   const vidRef = useRef<HTMLVideoElement>(null);
   const canRef = useRef<HTMLCanvasElement>(null);
@@ -66,18 +87,13 @@ export default function Page({
 
   async function describeVideo() {
     setShowSpinner(true);
+    setNarration([]);
     await fetch(`/api/describeVideo/`, {
       method: "POST",
       body: JSON.stringify({
         url: videoUrl,
         key: searchParams.name,
       }),
-    }).then(async (response) => {
-      setShowSpinner(false);
-      console.log(response);
-      const restext: string[] = JSON.parse(await response.text());
-      const restextStr = restext.join("");
-      setNarration(restextStr);
     });
   }
 
@@ -131,7 +147,8 @@ export default function Page({
         setShowSpinner(false);
         vidRef.current!.play();
         const restext = await response.text();
-        setNarration(restext);
+        const newNarration = [...narration, restext];
+        setNarration(newNarration);
       });
     }
   }
@@ -169,7 +186,16 @@ export default function Page({
         </div>
 
         <h3>Narration using GPT 4 vision:</h3>
-        <p>{eachNar}</p>
+        <p>
+          {narration.map((r, idx) => {
+            return (
+              <React.Fragment key={idx}>
+                {r} <br />
+                <br />
+              </React.Fragment>
+            );
+          })}
+        </p>
 
         {showSpinner && (
           <div className="lds-ellipsis">

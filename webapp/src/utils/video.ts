@@ -15,6 +15,7 @@ import path from "path";
 import sharp from "sharp";
 import ollama from "ollama";
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
+import { Redis } from "@upstash/redis";
 
 const openai = new OpenAI({
   // baseURL: "http://localhost:11434/v1",
@@ -52,6 +53,21 @@ export async function downloadVideo(url: string, videoName: string) {
     console.log("video downloaded: ", filePath);
   }
   return filePath;
+}
+
+export async function publishNotification(channel: string, message: string) {
+  const redis = Redis.fromEnv();
+
+  // Extract the message in the form submitted
+
+  await redis.publish(
+    channel,
+    JSON.stringify({
+      channel,
+      message,
+      date: new Date().toString(),
+    })
+  );
 }
 
 export async function videoToFrames(filePath: string, videoName: string) {
