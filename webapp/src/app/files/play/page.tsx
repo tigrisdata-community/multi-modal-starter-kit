@@ -1,18 +1,9 @@
 "use client";
 
 import { fetchAndPlayTextToSpeech } from "@/app/actions";
+import { url } from "inspector";
 import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-// Play audio from post response from 11 labs
-async function pAudio(url: string) {
-  var audio = new Audio(url);
-  audio.play();
-}
-
-function isEmpty(val: string | undefined | null) {
-  return val === undefined || val == null || val.length <= 0 ? true : false;
-}
 
 export default function Page({
   searchParams,
@@ -24,6 +15,8 @@ export default function Page({
   const videoUrl: string = `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${searchParams.name}`;
   const [narration, setNarration] = useState<string[]>([]);
   const [showSpinner, setShowSpinner] = useState(false);
+  const [audioQueue, setAudioQueue] = useState<string[]>([]);
+  const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
 
   const [eventSource, setEventSource] = useState<any>(null);
   const initialized = useRef(false);
@@ -33,19 +26,20 @@ export default function Page({
     console.log("ready state: ", eventSource.readyState);
 
     eventSource.addEventListener("message", (event) => {
-      const tmp = JSON.parse(event.data);
-      if (tmp.message === "END") {
-        setShowSpinner(false);
-        return;
-      }
-      console.log("data: ", tmp);
+      (async (event) => {
+        const tmp = JSON.parse(event.data);
+        if (tmp.message === "END") {
+          setShowSpinner(false);
+          return;
+        }
 
-      setNarration((currentNarration) => [...currentNarration, tmp.message]);
-      //console.log("event message", tmp.message);
+        setNarration((currentNarration) => [...currentNarration, tmp.message]);
+        await queueAudio(tmp.message);
+      })(event);
     });
 
     eventSource.addEventListener("error", (e: any) => {
-      console.log("event error", e);
+      console.error("event error", e);
       eventSource.close();
       setTimeout(connectToStream, 1);
     });
@@ -58,26 +52,52 @@ export default function Page({
   }, []);
 
   useEffect(() => {
-    console.log("narration = ", narration);
     if (!initialized.current) {
       const es = connectToStream();
       setEventSource(es);
       initialized.current = true;
     }
-
-    const queueAudio = async () => {
-      if (narration.length === 0) {
-        // TODO - this needs to be fixed. just testing
-        const response = await fetchAndPlayTextToSpeech(narration[0]);
-        if (response) {
-          pAudio(response);
-        }
-      }
-    };
-  }, [narration, eventSource, connectToStream]);
+    console.log("audioQueue:", audioQueue);
+    console.log("isAudioPlaying: ", isAudioPlaying);
+    if (!isAudioPlaying && audioQueue.length > 0) {
+      console.log("playing audio...");
+      const audioUrl = audioQueue[0];
+      setAudioQueue(audioQueue.slice(1));
+      (async (audioUrl) => {
+        console.log("play");
+        await pAudio(audioUrl);
+      })(audioUrl);
+    }
+  }, [narration, eventSource, audioQueue, isAudioPlaying, connectToStream]);
 
   const vidRef = useRef<HTMLVideoElement>(null);
   const canRef = useRef<HTMLCanvasElement>(null);
+
+  // Play audio from post response from 11 labs
+  async function pAudio(url: string) {
+    setIsAudioPlaying(true);
+    const audio = new Audio(url);
+
+    await audio
+      .play()
+      .catch((error) => console.error("Error playing audio:", error));
+
+    audio.onended = () => {
+      setIsAudioPlaying(false);
+    };
+  }
+
+  const queueAudio = async (narration: string) => {
+    if (narration.length !== 0) {
+      const response = await fetchAndPlayTextToSpeech(narration);
+      if (response) {
+        setAudioQueue((currentQueue) => {
+          const updatedQueue = [...currentQueue, response];
+          return updatedQueue;
+        });
+      }
+    }
+  };
 
   const handlePlayVideo = () => {
     if (vidRef.current != null) {

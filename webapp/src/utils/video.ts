@@ -277,7 +277,8 @@ export async function describeImageForVideo(url: string, context: string = "") {
         {
           role: "user",
           content: `These are frames from an old science fiction movie with one or more pictures. 
-          Generate a funny description of the image or a sequence of images.  Really roast the movie.
+          Generate a funny description of the image or a sequence of images.  Really roast the movie. 
+          Make the answer ONE SENTENCE only please.
           Previously you have described other frames from the same video, here is what you said: ${context}. 
           
           Make your description unique and not repetitive please!. Also, please keep it to only a few sentances.`,
