@@ -1,4 +1,3 @@
-// Can be 'nodejs', but Vercel recommends using 'edge'
 export const runtime = "nodejs";
 
 // Prevents this route's response from being cached

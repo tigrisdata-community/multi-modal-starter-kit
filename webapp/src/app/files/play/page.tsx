@@ -167,8 +167,8 @@ export default function Page({
         setShowSpinner(false);
         vidRef.current!.play();
         const restext = await response.text();
-        const newNarration = [...narration, restext];
-        setNarration(newNarration);
+        await queueAudio(restext);
+        setNarration([restext]);
       });
     }
   }

@@ -23,10 +23,6 @@ export async function POST(req: NextRequest, res: NextResponse) {
   let aiResponse = [];
   const setKey = "ai-responses";
 
-  // const collageUrls = [
-  //   "https://cat-detector.fly.storage.tigris.dev/test-video.mp4/collage-2.jpg",
-  //   "https://cat-detector.fly.storage.tigris.dev/test-video.mp4/collage-1.jpg",
-  // ];
   for (let index = 0; index < collageUrls.length; index++) {
     const result = await describeImageForVideo(collageUrls[index], context);
     await publishNotification(setKey, result.content || "");
