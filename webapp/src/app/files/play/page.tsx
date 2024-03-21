@@ -1,22 +1,9 @@
 "use client";
 
 import { fetchAndPlayTextToSpeech } from "@/app/actions";
-import { useEffect, useRef, useState } from "react";
-
-// Remove all " and ' when passing to eleven labs.
-function addslashes(str: string) {
-  return (str + "").replaceAll('"', "").replaceAll("'", "");
-}
-
-// Play audio from post response from 11 labs
-async function pAudio(url: string) {
-  var audio = new Audio(url);
-  audio.play();
-}
-
-function isEmpty(val: string | undefined | null) {
-  return val === undefined || val == null || val.length <= 0 ? true : false;
-}
+import { url } from "inspector";
+import React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function Page({
   searchParams,
@@ -26,37 +13,91 @@ export default function Page({
   };
 }) {
   const videoUrl: string = `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${searchParams.name}`;
-  const [narration, setNarration] = useState("");
-  const [eachNar, setEachNar] = useState("");
+  const [narration, setNarration] = useState<string[]>([]);
   const [showSpinner, setShowSpinner] = useState(false);
+  const [audioQueue, setAudioQueue] = useState<string[]>([]);
+  const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
+
+  const [eventSource, setEventSource] = useState<any>(null);
+  const initialized = useRef(false);
+
+  const connectToStream = useCallback(() => {
+    const eventSource = new EventSource("/api/stream");
+    console.log("ready state: ", eventSource.readyState);
+
+    eventSource.addEventListener("message", (event) => {
+      (async (event) => {
+        const tmp = JSON.parse(event.data);
+        if (tmp.message === "END") {
+          setShowSpinner(false);
+          return;
+        }
+
+        setNarration((currentNarration) => [...currentNarration, tmp.message]);
+        await queueAudio(tmp.message);
+      })(event);
+    });
+
+    eventSource.addEventListener("error", (e: any) => {
+      console.error("event error", e);
+      eventSource.close();
+      setTimeout(connectToStream, 1);
+    });
+    // As soon as SSE API source is closed, attempt to reconnect
+    eventSource.addEventListener("close", () => {
+      console.log("event close");
+      setTimeout(connectToStream, 1);
+    });
+    return eventSource;
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (narration !== "") {
-        const response = await fetchAndPlayTextToSpeech(narration);
-        if (response) {
-          pAudio(response);
-        }
-      }
-    };
-
-    if (narration !== "") {
-      let incre = 0;
-      const timeoutId = setInterval(() => {
-        setEachNar(narration);
-        incre++;
-        if (incre >= narration.length) {
-          clearTimeout(timeoutId);
-        }
-      }, 1000);
-      fetchData();
-
-      return () => clearTimeout(timeoutId);
+    if (!initialized.current) {
+      const es = connectToStream();
+      setEventSource(es);
+      initialized.current = true;
     }
-  }, [narration]);
+    console.log("audioQueue:", audioQueue);
+    console.log("isAudioPlaying: ", isAudioPlaying);
+    if (!isAudioPlaying && audioQueue.length > 0) {
+      console.log("playing audio...");
+      const audioUrl = audioQueue[0];
+      setAudioQueue(audioQueue.slice(1));
+      (async (audioUrl) => {
+        console.log("play");
+        await pAudio(audioUrl);
+      })(audioUrl);
+    }
+  }, [narration, eventSource, audioQueue, isAudioPlaying, connectToStream]);
 
   const vidRef = useRef<HTMLVideoElement>(null);
   const canRef = useRef<HTMLCanvasElement>(null);
+
+  // Play audio from post response from 11 labs
+  async function pAudio(url: string) {
+    setIsAudioPlaying(true);
+    const audio = new Audio(url);
+
+    await audio
+      .play()
+      .catch((error) => console.error("Error playing audio:", error));
+
+    audio.onended = () => {
+      setIsAudioPlaying(false);
+    };
+  }
+
+  const queueAudio = async (narration: string) => {
+    if (narration.length !== 0) {
+      const response = await fetchAndPlayTextToSpeech(narration);
+      if (response) {
+        setAudioQueue((currentQueue) => {
+          const updatedQueue = [...currentQueue, response];
+          return updatedQueue;
+        });
+      }
+    }
+  };
 
   const handlePlayVideo = () => {
     if (vidRef.current != null) {
@@ -66,18 +107,13 @@ export default function Page({
 
   async function describeVideo() {
     setShowSpinner(true);
+    setNarration([]);
     await fetch(`/api/describeVideo/`, {
       method: "POST",
       body: JSON.stringify({
         url: videoUrl,
         key: searchParams.name,
       }),
-    }).then(async (response) => {
-      setShowSpinner(false);
-      console.log(response);
-      const restext: string[] = JSON.parse(await response.text());
-      const restextStr = restext.join("");
-      setNarration(restextStr);
     });
   }
 
@@ -131,7 +167,8 @@ export default function Page({
         setShowSpinner(false);
         vidRef.current!.play();
         const restext = await response.text();
-        setNarration(restext);
+        await queueAudio(restext);
+        setNarration([restext]);
       });
     }
   }
@@ -169,7 +206,16 @@ export default function Page({
         </div>
 
         <h3>Narration using GPT 4 vision:</h3>
-        <p>{eachNar}</p>
+        <p>
+          {narration.map((r, idx) => {
+            return (
+              <React.Fragment key={idx}>
+                {r} <br />
+                <br />
+              </React.Fragment>
+            );
+          })}
+        </p>
 
         {showSpinner && (
           <div className="lds-ellipsis">

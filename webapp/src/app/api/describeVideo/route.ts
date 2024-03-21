@@ -3,6 +3,7 @@ import {
   downloadVideo,
   makeCollage,
   describeImageForVideo,
+  publishNotification,
 } from "@/utils/video";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -20,11 +21,18 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
   let context = "";
   let aiResponse = [];
-  for (const collageUrl of collageUrls) {
-    const result = await describeImageForVideo(collageUrl, context);
+  const setKey = "ai-responses";
+
+  for (let index = 0; index < collageUrls.length; index++) {
+    const result = await describeImageForVideo(collageUrls[index], context);
+    await publishNotification(setKey, result.content || "");
+
     //TODO - should retry if OAI says it't can't help with the request
     aiResponse.push(result.content);
     context += result.content + " ";
+    if (index === collageUrls.length - 1) {
+      await publishNotification("ai-responses", "END");
+    }
   }
   return NextResponse.json(aiResponse);
 }

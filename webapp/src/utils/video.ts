@@ -15,11 +15,12 @@ import path from "path";
 import sharp from "sharp";
 import ollama from "ollama";
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
+import { Redis } from "@upstash/redis";
 
 const openai = new OpenAI({
   // baseURL: "http://localhost:11434/v1",
   // apiKey: "ollama",
-  apiKey: process.env.OPENAI_API_KEY, // This is the default and can be omitted
+  apiKey: process.env.OPENAI_API_KEY || "", // This is the default and can be omitted
 });
 const client = new S3Client();
 const useOllama = process.env.USE_OLLAMA === "true";
@@ -52,6 +53,21 @@ export async function downloadVideo(url: string, videoName: string) {
     console.log("video downloaded: ", filePath);
   }
   return filePath;
+}
+
+export async function publishNotification(channel: string, message: string) {
+  const redis = Redis.fromEnv();
+
+  // Extract the message in the form submitted
+
+  await redis.publish(
+    channel,
+    JSON.stringify({
+      channel,
+      message,
+      date: new Date().toString(),
+    })
+  );
 }
 
 export async function videoToFrames(filePath: string, videoName: string) {
@@ -261,7 +277,8 @@ export async function describeImageForVideo(url: string, context: string = "") {
         {
           role: "user",
           content: `These are frames from an old science fiction movie with one or more pictures. 
-          Generate a funny description of the image or a sequence of images.  Really roast the movie.
+          Generate a funny description of the image or a sequence of images.  Really roast the movie. 
+          Make the answer ONE SENTENCE only please.
           Previously you have described other frames from the same video, here is what you said: ${context}. 
           
           Make your description unique and not repetitive please!. Also, please keep it to only a few sentances.`,
