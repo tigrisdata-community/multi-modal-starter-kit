@@ -27,7 +27,10 @@ export async function fetchAndPlayTextToSpeech(narrationText: string) {
       );
 
       if (response.status !== 200) {
-        console.error("Unable to create elevenlabs audio. Error: " + response);
+        console.error(
+          "Unable to create elevenlabs audio. Error: " +
+            JSON.stringify(response)
+        );
         return;
       }
 
