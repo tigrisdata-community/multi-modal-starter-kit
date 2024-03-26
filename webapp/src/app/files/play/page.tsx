@@ -214,7 +214,7 @@ export default function Page({
           <div className="text-center">
             <div className="mx-auto mt-6 max-w-prose space-y-2 mb-10 ml-0">
               <p className="text-md font-semibold text-left">
-                🎥 Video Hosting:{" "}
+                🎥 Video & Image Hosting:{" "}
                 <a
                   href="https://www.tigrisdata.com/"
                   className="text-blue-500 hover:text-blue-700"
@@ -223,7 +223,7 @@ export default function Page({
                 </a>
               </p>
               <p className="text-md font-semibold text-left">
-                🎙️ Narration:{" "}
+                🧠 Model:{" "}
                 <a
                   href={
                     modelName.startsWith("Ollama")
@@ -233,6 +233,15 @@ export default function Page({
                   className="text-blue-500 hover:text-blue-700"
                 >
                   {modelName}
+                </a>
+              </p>
+              <p className="text-md font-semibold text-left">
+                🎙️ Narration:{" "}
+                <a
+                  href="https://elevenlabs.io/"
+                  className="text-blue-500 hover:text-blue-700"
+                >
+                  ElevenLabs
                 </a>
               </p>
             </div>

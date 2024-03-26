@@ -5,7 +5,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 const client = new S3Client();
 
 export async function getModelName() {
-  return process.env.USE_OLLAMA === "true" ? "Ollama (Llava)" : "OpenAI";
+  return process.env.USE_OLLAMA === "true" ? "Ollama (LLaVA)" : "OpenAI";
 }
 
 export async function fetchAndPlayTextToSpeech(narrationText: string) {
