@@ -1,19 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 :root {
-
-  --foreground-hex:#000000;
+  --foreground-hex: #000000;
   --background-hex: #ffffff;
   --max-width: 1100px;
   --border-radius: 12px;
   --font-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono",
     "Roboto Mono", "Oxygen Mono", "Ubuntu Monospace", "Source Code Pro",
     "Fira Mono", "Droid Sans Mono", "Courier New", monospace;
-
-
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --foreground-hex:#141414;
+    --foreground-hex: #141414;
     --background-hex: #ffffff;
   }
 }
@@ -40,8 +40,8 @@ a {
   text-decoration: none;
 }
 
-button{
-  background-color: #b7caff; 
+button {
+  background-color: #b7caff;
   border: none;
   color: white;
   padding: 15px 32px;
@@ -56,30 +56,32 @@ button{
   }
 }
 
-button{
+button {
   display: inline-block;
   outline: 0;
   border: 0;
   cursor: pointer;
   background: #000000;
-  color: #FFFFFF;
+  color: #ffffff;
   border-radius: 8px;
   padding: 14px 24px 16px;
   font-size: 18px;
   font-weight: 700;
   line-height: 1;
-  transition: transform 200ms, background 200ms;
-  :hover{
-      transform: translateY(-2px);
-  }  
+  transition:
+    transform 200ms,
+    background 200ms;
+  :hover {
+    transform: translateY(-2px);
+  }
 }
 
-.playerContainer{
+.playerContainer {
   display: flex;
   flex-direction: column;
-  justify-content:center;
+  justify-content: center;
   align-items: center;
-  gap:10px;
+  gap: 10px;
 }
 
 .lds-ellipsis {
@@ -137,5 +139,3 @@ button{
     transform: translate(24px, 0);
   }
 }
-
-
