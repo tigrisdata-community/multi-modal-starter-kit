@@ -4,6 +4,10 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const client = new S3Client();
 
+export async function getModelName() {
+  return process.env.USE_OLLAMA === "true" ? "Ollama (Llava)" : "OpenAI";
+}
+
 export async function fetchAndPlayTextToSpeech(narrationText: string) {
   console.log("current narration", narrationText);
   if (!isEmpty(process.env.XI_API_KEY)) {

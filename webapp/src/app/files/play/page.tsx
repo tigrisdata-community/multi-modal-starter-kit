@@ -1,9 +1,9 @@
 "use client";
 
-import { fetchAndPlayTextToSpeech } from "@/app/actions";
-import { url } from "inspector";
+import { fetchAndPlayTextToSpeech, getModelName } from "@/app/actions";
 import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function Page({
   searchParams,
@@ -17,6 +17,7 @@ export default function Page({
   const [showSpinner, setShowSpinner] = useState(false);
   const [audioQueue, setAudioQueue] = useState<string[]>([]);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
+  const [modelName, setModelName] = useState<string>("Unknown");
 
   const [eventSource, setEventSource] = useState<any>(null);
   const initialized = useRef(false);
@@ -52,6 +53,11 @@ export default function Page({
   }, []);
 
   useEffect(() => {
+    (async () => {
+      const modelName = await getModelName();
+      setModelName(modelName);
+    })();
+
     if (!initialized.current) {
       const es = connectToStream();
       setEventSource(es);
@@ -143,6 +149,7 @@ export default function Page({
 
   async function captureFrame() {
     if (canRef.current && vidRef.current) {
+      setShowSpinner(true);
       vidRef.current.pause();
       const context = canRef.current.getContext("2d")!;
       const currentTime = vidRef.current.currentTime;
@@ -157,7 +164,6 @@ export default function Page({
         dataURLs.push(dataURL);
       }
 
-      setShowSpinner(true);
       fetch(`/api/describe/`, {
         method: "POST",
         body: JSON.stringify({
@@ -167,71 +173,101 @@ export default function Page({
         setShowSpinner(false);
         vidRef.current!.play();
         const restext = await response.text();
-        await queueAudio(restext);
         setNarration([restext]);
+        await queueAudio(restext);
       });
     }
   }
 
   return (
     <>
-      <div className="playerContainer">
-        <h3>Playing video from Tigris:</h3>
-        <p>{videoUrl}</p>
-
-        <video
-          ref={vidRef}
-          crossOrigin=""
-          width="640"
-          height="400"
-          controls
-          preload="auto"
-          data-setup="{}"
-        >
-          <source src={videoUrl} type="video/mp4" />
-        </video>
-
-        <div>
-          <button
-            className="button-53"
-            onClick={handlePlayVideo}
-            style={{ marginRight: 20 }}
+      <div
+        key="1"
+        className="flex flex-col items-center justify-center p-8 bg-white"
+      >
+        {/* <h3>Playing video from Tigris:</h3>
+        <p>{videoUrl}</p> */}
+        <div className="w-full max-w-2xl">
+          <video
+            ref={vidRef}
+            crossOrigin=""
+            width="640"
+            height="400"
+            controls
+            preload="auto"
+            data-setup="{}"
           >
-            Play
-          </button>
-          <button style={{ marginRight: 20 }} onClick={captureFrame}>
-            Capture
-          </button>
-          <button onClick={describeVideo}>Describe Video</button>
-        </div>
+            <source src={videoUrl} type="video/mp4" />
+          </video>
 
-        <h3>Narration using GPT 4 vision:</h3>
-        <p>
-          {narration.map((r, idx) => {
-            return (
-              <React.Fragment key={idx}>
-                {r} <br />
-                <br />
-              </React.Fragment>
-            );
-          })}
-        </p>
-
-        {showSpinner && (
-          <div className="lds-ellipsis">
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
+          <div className="flex justify-center space-x-4 my-4">
+            <Button className="bg-black text-white" onClick={handlePlayVideo}>
+              Play
+            </Button>
+            <Button className="bg-black text-white" onClick={captureFrame}>
+              Capture
+            </Button>
+            <Button className="bg-black text-white" onClick={describeVideo}>
+              Describe Video
+            </Button>
           </div>
-        )}
+          <div className="text-center">
+            <div className="mx-auto mt-6 max-w-prose space-y-2 mb-10 ml-0">
+              <p className="text-md font-semibold text-left">
+                🎥 Video Hosting:{" "}
+                <a
+                  href="https://www.tigrisdata.com/"
+                  className="text-blue-500 hover:text-blue-700"
+                >
+                  Tigris
+                </a>
+              </p>
+              <p className="text-md font-semibold text-left">
+                🎙️ Narration:{" "}
+                <a
+                  href={
+                    modelName.startsWith("Ollama")
+                      ? "https://ollama.com/library/llava"
+                      : "https://openai.com/"
+                  }
+                  className="text-blue-500 hover:text-blue-700"
+                >
+                  {modelName}
+                </a>
+              </p>
+            </div>
+            {/* <h2 className="text-xl font-semibold mb-4 text-left">
+              Narration: {modelName}
+            </h2> */}
 
-        <canvas
-          ref={canRef}
-          width="640"
-          height="480"
-          style={{ display: "none" }}
-        ></canvas>
+            <div className="text-gray-600 text-left">
+              {narration.map((r, idx) => {
+                return (
+                  <React.Fragment key={idx}>
+                    <span className="flex items-center gap-2">{r} </span>
+                    <br />
+                    <br />
+                  </React.Fragment>
+                );
+              })}
+            </div>
+            {showSpinner && (
+              <div className="lds-ellipsis">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+              </div>
+            )}
+          </div>
+
+          <canvas
+            ref={canRef}
+            width="640"
+            height="480"
+            style={{ display: "none" }}
+          ></canvas>
+        </div>
       </div>
     </>
   );
