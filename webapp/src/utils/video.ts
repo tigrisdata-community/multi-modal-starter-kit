@@ -95,6 +95,9 @@ export async function videoToFrames(filePath: string, videoName: string) {
   });
 }
 
+let context = "";
+const setKey = "ai-responses";
+
 export async function makeCollage(videoName: string) {
   const framesFullPath = path.join(framesDir, videoName);
   const files = fs.readdirSync(framesFullPath);
@@ -103,8 +106,18 @@ export async function makeCollage(videoName: string) {
     const batch = files.slice(i, i + 6);
     const collageUrl = await createCollage(batch, Math.floor(i / 6), videoName);
     console.log("collageUrl", collageUrl);
-    result.push(collageUrl);
+
+    // describing collages!
+    const result = await describeImageForVideo(collageUrl, context);
+    await publishNotification(setKey, result.content || "");
+
+    //TODO - should retry if OAI says it't can't help with the request
+    context += result.content + " ";
+    if (i >= files.length - 6) {
+      await publishNotification("ai-responses", "END");
+    }
   }
+  context = "";
   return result;
 }
 
