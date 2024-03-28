@@ -8,7 +8,10 @@ export async function getModelName() {
   return process.env.USE_OLLAMA === "true" ? "Ollama (LLaVA)" : "OpenAI";
 }
 
-export async function fetchAndPlayTextToSpeech(narrationText: string) {
+export async function fetchAndPlayTextToSpeech(
+  narrationText: string,
+  videoName: string
+) {
   console.log("current narration", narrationText);
   if (!isEmpty(process.env.XI_API_KEY)) {
     // Narrate with 11 labs
@@ -40,10 +43,11 @@ export async function fetchAndPlayTextToSpeech(narrationText: string) {
 
       const blob = await response.blob();
       const ts = new Date().getTime();
+      const audioFileSavedAt = `elevenLabsAudio/${videoName}/${ts} + .mp3`;
       const arrayBuffer = await blob.arrayBuffer();
       const tigrisParam = {
         Bucket: process.env.NEXT_PUBLIC_BUCKET_NAME!,
-        Key: ts + ".mp3",
+        Key: audioFileSavedAt,
         Body: Buffer.from(arrayBuffer),
         ContentType: "audio/mpeg",
       };
@@ -53,7 +57,7 @@ export async function fetchAndPlayTextToSpeech(narrationText: string) {
 
       try {
         await client.send(new PutObjectCommand(tigrisParam));
-        const url = `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${ts}.mp3`;
+        const url = `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${audioFileSavedAt}`;
         console.log("Audio saved to Tigris: ", url);
         return url;
       } catch (e) {
