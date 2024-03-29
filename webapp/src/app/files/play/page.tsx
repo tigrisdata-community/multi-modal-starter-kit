@@ -95,9 +95,12 @@ export default function Page({
 
   const queueAudio = async (narration: string) => {
     if (narration.length !== 0) {
-      const response = await fetchAndPlayTextToSpeech(narration);
+      const response = await fetchAndPlayTextToSpeech(
+        narration,
+        searchParams.name || "Unknown"
+      );
       if (response) {
-        setAudioQueue((currentQueue) => {
+        setAudioQueue((currentQueue: any) => {
           const updatedQueue = [...currentQueue, response];
           return updatedQueue;
         });

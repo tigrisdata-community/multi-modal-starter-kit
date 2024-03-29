@@ -15,6 +15,7 @@
     "@radix-ui/react-slot": "^1.0.2",
     "@react-email/img": "^0.0.7",
     "@upstash/ratelimit": "^1.0.1",
+    "@upstash/redis": "^1.29.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "fluent-ffmpeg": "^2.1.2",
