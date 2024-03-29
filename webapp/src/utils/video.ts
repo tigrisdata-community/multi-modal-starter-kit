@@ -23,6 +23,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "", // This is the default and can be omitted
 });
 const client = new S3Client();
+const redis = Redis.fromEnv();
 const useOllama = process.env.USE_OLLAMA === "true";
 
 //TODO - for debugging
@@ -58,8 +59,6 @@ export async function downloadVideo(url: string, videoName: string) {
 }
 
 export async function publishNotification(channel: string, message: string) {
-  const redis = Redis.fromEnv();
-
   // Extract the message in the form submitted
 
   await redis.publish(
@@ -141,7 +140,7 @@ export async function makeCollage(
       console.log("collageUrl", collageUrl);
 
       // describing collages!
-      const result = await describeImageForVideo(collageUrl, context);
+      const result: any = await describeImageForVideo(collageUrl, context);
       await publishNotification(setKey, result.content || "");
 
       //TODO - should retry if OAI says it't can't help with the request
@@ -162,7 +161,7 @@ export async function makeCollage(
     } else {
       for (let i = 0; i < collages.length; i++) {
         const collageUrl = `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${collages[i].Key}`;
-        const result = await describeImageForVideo(collageUrl, context);
+        const result: any = await describeImageForVideo(collageUrl, context);
         await publishNotification(setKey, result.content || "");
         context += result.content + " ";
 
@@ -335,6 +334,11 @@ export default async function toBase64ImageUrl(
 }
 
 export async function describeImageForVideo(url: string, context: string = "") {
+  const cachedResult = await redis.get(url);
+  if (cachedResult) {
+    return cachedResult;
+  }
+
   const systemPrompt: ChatCompletionMessageParam = {
     role: "system",
     content: `
@@ -360,6 +364,8 @@ export async function describeImageForVideo(url: string, context: string = "") {
       ],
     });
     console.log("Ollama (Llava) Response: ", response.message);
+    await redis.set(url, response.message);
+    await redis.expire(url, 60 * 60);
     return response.message;
   } else {
     const chatCompletion = await openai.chat.completions.create({
@@ -388,6 +394,8 @@ export async function describeImageForVideo(url: string, context: string = "") {
       model: "gpt-4-vision-preview",
       max_tokens: 2048,
     });
+    await redis.set(url, chatCompletion.choices[0].message);
+    await redis.expire(url, 60 * 60);
     console.log("AI Response: ", chatCompletion.choices[0].message.content);
     return chatCompletion.choices[0].message;
   }

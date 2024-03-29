@@ -1,8 +1,10 @@
 "use server";
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { Redis } from "@upstash/redis";
 
 const client = new S3Client();
+const redis = Redis.fromEnv();
 
 export async function getModelName() {
   return process.env.USE_OLLAMA === "true" ? "Ollama (LLaVA)" : "OpenAI";
@@ -13,6 +15,12 @@ export async function fetchAndPlayTextToSpeech(
   videoName: string
 ) {
   console.log("current narration", narrationText);
+  const cachedResult = await redis.get(narrationText);
+  if (cachedResult) {
+    console.log("cached result", cachedResult);
+    return cachedResult;
+  }
+
   if (!isEmpty(process.env.XI_API_KEY)) {
     // Narrate with 11 labs
 
@@ -43,7 +51,7 @@ export async function fetchAndPlayTextToSpeech(
 
       const blob = await response.blob();
       const ts = new Date().getTime();
-      const audioFileSavedAt = `elevenLabsAudio/${videoName}/${ts} + .mp3`;
+      const audioFileSavedAt = `elevenLabsAudio/${videoName}/${ts}.mp3`;
       const arrayBuffer = await blob.arrayBuffer();
       const tigrisParam = {
         Bucket: process.env.NEXT_PUBLIC_BUCKET_NAME!,
@@ -58,6 +66,7 @@ export async function fetchAndPlayTextToSpeech(
       try {
         await client.send(new PutObjectCommand(tigrisParam));
         const url = `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${audioFileSavedAt}`;
+        await redis.set(narrationText, url);
         console.log("Audio saved to Tigris: ", url);
         return url;
       } catch (e) {
