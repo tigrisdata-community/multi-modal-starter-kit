@@ -20,16 +20,16 @@ export async function GET(req: NextRequest) {
 
       const messageHandler = (channel: string, message: string) => {
         console.log("redis message", message, channel);
-        if (channel === setKey)
-          controller.enqueue(encoder.encode(`data: ${message}\n\n`));
+        if (channel === setKey) {
+          try {
+            controller.enqueue(encoder.encode(`data: ${message}\n\n`));
+          } catch (error) {
+            console.error("Error in messageHandler", error);
+          }
+        }
       };
 
       redisSubscriber.on("message", messageHandler);
-
-      redisSubscriber.on("end", () => {
-        console.log("redis connection closed!!!");
-        controller.close();
-      });
 
       const cleanup = () => {
         console.log("Cleaning up...");
@@ -43,6 +43,7 @@ export async function GET(req: NextRequest) {
       redisSubscriber.on("end", cleanup);
     },
   });
+
   return new Response(customReadable, {
     headers: {
       Connection: "keep-alive",

@@ -31,6 +31,8 @@ const useOllama = process.env.USE_OLLAMA === "true";
 const framesDir = path.join(process.cwd(), "static", "frames");
 const videoDir = path.join(process.cwd(), "static", "video");
 const frameRate = 10;
+const tigrisFramesDir = process.env.FRAME_FOLER_NAME || "frames";
+const tigrisCollagesDir = process.env.COLLAGE_FOLER_NAME || "collages";
 
 type LLMOutput = {
   detected: string;
@@ -70,8 +72,26 @@ export async function publishNotification(channel: string, message: string) {
   );
 }
 
+export async function listTigrisDirectoryItems(directoryPrefix: string) {
+  const tigrisParams = {
+    Bucket: process.env.NEXT_PUBLIC_BUCKET_NAME!,
+    Prefix: directoryPrefix,
+  };
+
+  try {
+    const command = new ListObjectsV2Command(tigrisParams);
+    const response = await client.send(command);
+    return response.Contents || [];
+  } catch (error) {
+    console.error("Error checking directory:", error);
+    throw error;
+  }
+}
+
 export async function videoToFrames(filePath: string, videoName: string) {
   const framesFullPath = path.join(framesDir, videoName);
+
+  // No collage found. Generate frames!
   if (!fs.existsSync(framesFullPath)) {
     fs.mkdirSync(framesFullPath, { recursive: true });
   }
@@ -98,27 +118,80 @@ export async function videoToFrames(filePath: string, videoName: string) {
 let context = "";
 const setKey = "ai-responses";
 
-export async function makeCollage(videoName: string) {
+export async function makeCollage(
+  videoName: string,
+  shouldCreateCollage: boolean
+) {
   const framesFullPath = path.join(framesDir, videoName);
   const files = fs.readdirSync(framesFullPath);
-  let result: string[] = [];
-  for (let i = 0; i < files.length; i += 6) {
-    const batch = files.slice(i, i + 6);
-    const collageUrl = await createCollage(batch, Math.floor(i / 6), videoName);
-    console.log("collageUrl", collageUrl);
 
-    // describing collages!
-    const result = await describeImageForVideo(collageUrl, context);
-    await publishNotification(setKey, result.content || "");
+  if (shouldCreateCollage) {
+    if (files.length === 0) {
+      console.error("ERROR: no frames found for video.");
+      return;
+    }
 
-    //TODO - should retry if OAI says it't can't help with the request
-    context += result.content + " ";
-    if (i >= files.length - 6) {
-      await publishNotification("ai-responses", "END");
+    for (let i = 0; i < files.length; i += 6) {
+      const batch = files.slice(i, i + 6);
+      const collageUrl = await createCollage(
+        batch,
+        Math.floor(i / 6),
+        videoName
+      );
+      console.log("collageUrl", collageUrl);
+
+      // describing collages!
+      const result = await describeImageForVideo(collageUrl, context);
+      await publishNotification(setKey, result.content || "");
+
+      //TODO - should retry if OAI says it't can't help with the request
+      context += result.content + " ";
+      if (i >= files.length - 6) {
+        await publishNotification(setKey, "END");
+      }
+    }
+    context = "";
+  } else {
+    console.log("Collages already created.");
+    const collages = await listTigrisDirectoryItems(
+      `${tigrisCollagesDir}/${videoName}`
+    );
+    if (collages.length === 0) {
+      // for some reason, collages are empty!
+      throw new Error("No collages found.");
+    } else {
+      for (let i = 0; i < collages.length; i++) {
+        const collageUrl = `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${collages[i].Key}`;
+        const result = await describeImageForVideo(collageUrl, context);
+        await publishNotification(setKey, result.content || "");
+        context += result.content + " ";
+
+        if (i >= collages.length - 1) {
+          await publishNotification(setKey, "END");
+        }
+      }
     }
   }
-  context = "";
-  return result;
+}
+
+async function uploadToTigris(
+  key: string,
+  body: any,
+  contentType: string,
+  bucket = process.env.NEXT_PUBLIC_BUCKET_NAME!
+) {
+  const tigrisParam = {
+    Bucket: bucket,
+    Key: key,
+    Body: body,
+    ContentType: contentType,
+  };
+
+  try {
+    await client.send(new PutObjectCommand(tigrisParam));
+  } catch (e) {
+    console.error("Failed to save collage: ", e);
+  }
 }
 
 export async function createCollage(
@@ -178,27 +251,14 @@ export async function createCollage(
   const collageTs = Date.now();
 
   const collageUrl = collageFromCapture
-    ? `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${videoName}/capture/${collageTs}.jpg`
-    : `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${videoName}/collage-${batchIndex + 1}.jpg`;
+    ? `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/capture/${videoName}/${collageTs}.jpg`
+    : `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${tigrisCollagesDir}/${videoName}/collage-${batchIndex + 1}.jpg`;
 
-  const tigrisParam = {
-    Bucket: process.env.NEXT_PUBLIC_BUCKET_NAME!,
-    Key: collageFromCapture
-      ? `${videoName}/capture/${collageTs}.jpg`
-      : `${videoName}/collage-${batchIndex + 1}.jpg`,
-    Body: collageBuffer,
-    ContentType: "image/jpeg",
-  };
+  const uploadKey = collageFromCapture
+    ? `capture/${videoName}/${collageTs}.jpg`
+    : `${tigrisCollagesDir}/${videoName}/collage-${batchIndex + 1}.jpg`;
 
-  // For testing locally
-  // collage.toFile(path.join(frameCollageDir, `collage-${batchIndex + 1}.jpg`));
-
-  try {
-    await client.send(new PutObjectCommand(tigrisParam));
-    console.log("Collage saved to Tigris: ", collageUrl);
-  } catch (e) {
-    console.error("Failed to save collage: ", e);
-  }
+  await uploadToTigris(uploadKey, collageBuffer, "image/jpeg");
   return collageUrl;
 }
 
