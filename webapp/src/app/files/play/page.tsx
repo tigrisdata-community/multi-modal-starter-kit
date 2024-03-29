@@ -100,7 +100,7 @@ export default function Page({
         searchParams.name || "Unknown"
       );
       if (response) {
-        setAudioQueue((currentQueue) => {
+        setAudioQueue((currentQueue: any) => {
           const updatedQueue = [...currentQueue, response];
           return updatedQueue;
         });
