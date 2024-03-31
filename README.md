@@ -54,3 +54,10 @@
 - cd `webapp`
 - `npm install`
 - `npm run dev`
+
+9. Periodic cleanup
+
+Currently temporary files for the snapshots that get passed to the model and the elevenlabs voice files are stored in the bucket
+and are not cleaned up. To clean these up, you can run the following from the CLI:
+
+`aws s3 rm s3://BUCKET_NAME/ --endpoint-url https://fly.storage.tigris.dev --recursive --exclude "*.mp4"`
