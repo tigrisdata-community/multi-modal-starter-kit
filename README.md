@@ -1,6 +1,6 @@
 ## Multi Modal Starter Kit 🤖📽️
 
-A multi modal starter kit that have AI narrate a video or scene of your choice. Includes examples of how to do video processing, frames extraction, and sending frames to AI models optimally.
+A multi modal starter kit that can have AI narrate a video or scene of your choice. Includes examples of how to do video processing, frames extraction, and sending frames to AI models optimally.
 
 Have questions? Join [AI Stack devs](https://discord.gg/TsWCNVvRP5).
 
