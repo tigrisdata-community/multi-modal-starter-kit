@@ -1,19 +1,21 @@
 ## Multi Modal Starter Kit 🤖📽️
 
-A multi modal starter kit that have AI narrate a video or scene of your choice. Includes examples of how to do video processing, frames extraction, and sending frames to AI models optimally. 
+A multi modal starter kit that have AI narrate a video or scene of your choice. Includes examples of how to do video processing, frames extraction, and sending frames to AI models optimally.
 
-Have questions? Join [AI Stack devs](https://discord.gg/TsWCNVvRP5). 
+Have questions? Join [AI Stack devs](https://discord.gg/TsWCNVvRP5).
 
 ## Stack
+
 - 💻 Video and Image hosting: [Tigris](https://www.tigrisdata.com/)
 - 🦙 Inference: [Ollama](https://github.com/jmorganca/ollama), with options to use [Replicate](https://replicate.com/) or OpenAI
 - 💾 Caching: [Upstash](https://upstash.com/)
 - 🤔 AI response pub/sub: [Upstash](https://upstash.com/)
 - 📢 Video narration: [ElevenLabs](https://elevenlabs.io/)
 - 🖼️ App logic: [Next.js](https://nextjs.org/)
-- 🖌️ UI: [Vercel v0](https://v0.dev/) 
+- 🖌️ UI: [Vercel v0](https://v0.dev/)
 
 ## Overview
+
 - 🚀 [Quickstart](#quickstart)
 - 💻 [Useful Commands](#useful-commands)
 
@@ -22,12 +24,14 @@ Have questions? Join [AI Stack devs](https://discord.gg/TsWCNVvRP5).
 ### Step 1: Set up Tigris
 
 1. Create an .env file
+
 ```
 cd multi-modal-starter-kit
 cp .env.example .env
 ```
 
 2. Set up Tigris
+
 - Make sure you have a fly.io account and have fly CLI installed on your computer
 - `cd multi-modal-starter-kit` and run `fly storage create`
 - You should get a list of credentials like below:
@@ -41,14 +45,23 @@ cp .env.example .env
 - `aws s3api put-bucket-cors --bucket BUCKET_NAME --cors-configuration file://cors.json --endpoint-url https://fly.storage.tigris.dev/`
 
 ### Step 2: Create a test video
+
 - Run `aws configure` and fill in access id / secret.
 - `aws s3 cp PATH_TO_VIDEO_FILE s3://BUCKET_NAME --endpoint-url https://fly.storage.tigris.dev`
 
+We have a [sample video](https://www.pexels.com/video/chef-stretching-pizza-dough-5897985/) in the `assets` directory that you can use to test the app. You can run the following command if you want to test the app with this video:
+
+```
+aws s3 cp ./assets/pasta-making.mp4 s3://BUCKET_NAME --endpoint-url https://fly.storage.tigris.dev`
+```
+
 ### Step 3: Set up ElevenLabs
+
 - Go to https://elevenlabs.io/, log in, and click on your profile picture on lower left. Select "Profile + API key". Copy the API key and save it as `XI_API_KEY` in the .env file
 - Select a 11labs voice by clicking on "Voices" on the left side nav bar and navigate to "VoiceLab". Copy the voice ID and save it as `XI_VOICE_ID` in .env
 
 ### Step 4: Set up Upstash
+
 When narrating a very long video, Upstash Redis is used for pub/sub and notifies the client when new snippets of reply come back. Upstash is also used for the critical task of caching video/images so the subsequent requests don't take long.
 
 - Go to https://console.upstash.com/, select "Create Database" with the following settings
@@ -72,23 +85,30 @@ When narrating a very long video, Upstash Redis is used for pub/sub and notifies
 - `npm run dev`
 
 ## Useful Commands
+
 Tigris is 100% aws cli compatible. Here are some frequently used commands during active development:
 
-### Check Tigris Dashboard 
+### Check Tigris Dashboard
+
 ```
 fly storage dashboard BUCKET_NAME
 ```
 
 ### Periodic cleanup
+
 Currently temporary files for the snapshots that get passed to the model and the elevenlabs voice files are stored in the bucket
 and are not cleaned up. To clean these up, you can run the following from the CLI:
 
-`aws s3 rm s3://BUCKET_NAME/ --endpoint-url https://fly.storage.tigris.dev --recursive --exclude "*.mp4"`
+```
+aws s3 rm s3://BUCKET_NAME/ --endpoint-url https://fly.storage.tigris.dev --recursive --exclude "*.mp4"
+```
 
 ### Pause voice
-Press 'v' to toggle the voice. This pauses the voice so it will resume at the point it was paused. 
 
-### Upload videos 
+Press 'v' to toggle the voice. This pauses the voice so it will resume at the point it was paused.
+
+### Upload videos
+
 ```
 aws s3 cp PATH_TO_YOUR_VIDEO s3://BUCKET_NAME --endpoint-url https://fly.storage.tigris.dev
 ```
