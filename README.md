@@ -21,6 +21,12 @@ Have questions? Join [AI Stack devs](https://discord.gg/TsWCNVvRP5).
 
 ## Quickstart
 
+### Step 0: Fork this repo and clone it
+
+```
+git clone git@github.com:[YOUR_GITHUB_ACCOUNT_NAME]/multi-modal-starter-kit.git
+```
+
 ### Step 1: Set up Tigris
 
 1. Create an .env file
