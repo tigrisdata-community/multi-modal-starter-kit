@@ -6,6 +6,22 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
+let audio = new Audio("");
+
+window.addEventListener(
+    "keydown", (event) => {
+        if (event.code == "KeyV"){
+          if (audio.paused) {
+            console.log("Playing voice");
+            audio.play();
+          } else {
+              console.log("Muting voice");
+              console.log(audio);
+              audio.pause();
+            }
+        }
+    });
+
 export default function Page({
   searchParams,
 }: {
@@ -83,7 +99,7 @@ export default function Page({
   // Play audio from post response from 11 labs
   async function pAudio(url: string) {
     setIsAudioPlaying(true);
-    const audio = new Audio(url);
+    audio = new Audio(url);
 
     await audio
       .play()
