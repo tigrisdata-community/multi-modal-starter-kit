@@ -4,6 +4,7 @@ import { fetchAndPlayTextToSpeech, getModelName } from "@/app/actions";
 import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function Page({
   searchParams,
@@ -184,103 +185,130 @@ export default function Page({
 
   return (
     <>
-      <div
-        key="1"
-        className="flex flex-col items-center justify-center p-8 bg-white"
-      >
-        {/* <h3>Playing video from Tigris:</h3>
-        <p>{videoUrl}</p> */}
-        <div className="w-full max-w-2xl">
-          <video
-            ref={vidRef}
-            crossOrigin=""
-            width="640"
-            height="400"
-            controls
-            preload="auto"
-            data-setup="{}"
-          >
-            <source src={videoUrl} type="video/mp4" />
-          </video>
-
-          <div className="flex justify-center space-x-4 my-4">
-            <Button className="bg-black text-white" onClick={handlePlayVideo}>
-              Play
-            </Button>
-            <Button className="bg-black text-white" onClick={captureFrame}>
-              Capture
-            </Button>
-            <Button className="bg-black text-white" onClick={describeVideo}>
-              Describe Video
-            </Button>
-          </div>
-          <div className="text-center">
-            <div className="mx-auto mt-6 max-w-prose space-y-2 mb-10 ml-0">
-              <p className="text-md font-semibold text-left">
-                🎥 Video & Image Hosting:{" "}
-                <a
-                  href="https://www.tigrisdata.com/"
-                  className="text-blue-500 hover:text-blue-700"
-                >
-                  Tigris
-                </a>
-              </p>
-              <p className="text-md font-semibold text-left">
-                🧠 Model:{" "}
-                <a
-                  href={
-                    modelName.startsWith("Ollama")
-                      ? "https://ollama.com/library/llava"
-                      : "https://openai.com/"
-                  }
-                  className="text-blue-500 hover:text-blue-700"
-                >
-                  {modelName}
-                </a>
-              </p>
-              <p className="text-md font-semibold text-left">
-                🎙️ Narration:{" "}
-                <a
-                  href="https://elevenlabs.io/"
-                  className="text-blue-500 hover:text-blue-700"
-                >
-                  ElevenLabs
-                </a>
+      <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center justify-center space-y-4 text-center">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl text-white">
+                Multi-modal Starter Kit
+              </h1>
+              <p className="max-w-[900px] text-white md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                AI video understanding & narration
               </p>
             </div>
-            {/* <h2 className="text-xl font-semibold mb-4 text-left">
+            <ul className="grid gap-2 py-4 grid-cols-1 lg:grid-cols-1">
+              <div
+                key="1"
+                className="flex flex-col items-center justify-center p-8 bg-white"
+              >
+                {/* <h3>Playing video from Tigris:</h3>
+        <p>{videoUrl}</p> */}
+                <div className="w-full max-w-2xl">
+                  <video
+                    ref={vidRef}
+                    crossOrigin=""
+                    width="640"
+                    height="400"
+                    controls
+                    preload="auto"
+                    data-setup="{}"
+                  >
+                    <source src={videoUrl} type="video/mp4" />
+                  </video>
+
+                  <div className="flex justify-center space-x-4 my-4">
+                    <Button
+                      className="bg-black text-white"
+                      onClick={handlePlayVideo}
+                    >
+                      Play
+                    </Button>
+                    <Button
+                      className="bg-black text-white"
+                      onClick={captureFrame}
+                    >
+                      Capture
+                    </Button>
+                    <Button
+                      className="bg-black text-white"
+                      onClick={describeVideo}
+                    >
+                      Describe Video
+                    </Button>
+                  </div>
+                  <div className="text-center">
+                    <div className="mx-auto mt-6 max-w-prose space-y-2 mb-10 ml-0">
+                      <p className="text-md font-semibold text-left">
+                        🎥 Video & Image Hosting:{" "}
+                        <a
+                          href="https://www.tigrisdata.com/"
+                          className="text-blue-500 hover:text-blue-700"
+                        >
+                          Tigris
+                        </a>
+                      </p>
+                      <p className="text-md font-semibold text-left">
+                        🧠 Model:{" "}
+                        <a
+                          href={
+                            modelName.startsWith("Ollama")
+                              ? "https://ollama.com/library/llava"
+                              : "https://openai.com/"
+                          }
+                          className="text-blue-500 hover:text-blue-700"
+                        >
+                          {modelName}
+                        </a>
+                      </p>
+                      <p className="text-md font-semibold text-left">
+                        🎙️ Narration:{" "}
+                        <a
+                          href="https://elevenlabs.io/"
+                          className="text-blue-500 hover:text-blue-700"
+                        >
+                          ElevenLabs
+                        </a>
+                      </p>
+                    </div>
+                    {/* <h2 className="text-xl font-semibold mb-4 text-left">
               Narration: {modelName}
             </h2> */}
 
-            <div className="text-gray-600 text-left">
-              {narration.map((r, idx) => {
-                return (
-                  <React.Fragment key={idx}>
-                    <span className="flex items-center gap-2">{r} </span>
-                    <br />
-                    <br />
-                  </React.Fragment>
-                );
-              })}
-            </div>
-            {showSpinner && (
-              <div className="lds-ellipsis">
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-              </div>
-            )}
-          </div>
+                    <div className="text-gray-600 text-left">
+                      {narration.map((r, idx) => {
+                        return (
+                          <React.Fragment key={idx}>
+                            <span className="flex items-center gap-2">
+                              {r}{" "}
+                            </span>
+                            <br />
+                            <br />
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
+                    {showSpinner && (
+                      <div className="lds-ellipsis">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                      </div>
+                    )}
+                  </div>
 
-          <canvas
-            ref={canRef}
-            width="640"
-            height="480"
-            style={{ display: "none" }}
-          ></canvas>
+                  <canvas
+                    ref={canRef}
+                    width="640"
+                    height="480"
+                    style={{ display: "none" }}
+                  ></canvas>
+                </div>
+              </div>
+            </ul>
+          </div>
         </div>
-      </div>
+      </section>
     </>
   );
 }
