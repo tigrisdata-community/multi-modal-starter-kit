@@ -233,12 +233,6 @@ export default function Page({
                   <div className="flex justify-center space-x-4 my-4">
                     <Button
                       className="bg-black text-white"
-                      onClick={handlePlayVideo}
-                    >
-                      Play
-                    </Button>
-                    <Button
-                      className="bg-black text-white"
                       onClick={captureFrame}
                     >
                       Capture

@@ -342,7 +342,7 @@ export async function describeImageForVideo(url: string, context: string = "") {
   const systemPrompt: ChatCompletionMessageParam = {
     role: "system",
     content: `
-      You are a teenager who is always making fun of people and things, and saying gross, juevenile stuff.
+      You are a a professional comedian. One of the funniest people in the world. You're known for deeply intellectual comedy that's hilarious but also interesting.
       `,
   };
 
