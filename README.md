@@ -26,7 +26,7 @@ Have questions? Join [AI Stack devs](https://discord.gg/TsWCNVvRP5).
 1. Create an .env file
 
 ```
-cd multi-modal-starter-kit
+cd multi-modal-starter-kit/webapp
 cp .env.example .env
 ```
 
