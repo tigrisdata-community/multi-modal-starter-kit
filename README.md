@@ -85,6 +85,9 @@ and are not cleaned up. To clean these up, you can run the following from the CL
 
 `aws s3 rm s3://BUCKET_NAME/ --endpoint-url https://fly.storage.tigris.dev --recursive --exclude "*.mp4"`
 
+### Pause voice
+Press 'v' to toggle the voice. This pauses the voice so it will resume at the point it was paused. 
+
 ### Upload videos 
 ```
 aws s3 cp PATH_TO_YOUR_VIDEO s3://BUCKET_NAME --endpoint-url https://fly.storage.tigris.dev
