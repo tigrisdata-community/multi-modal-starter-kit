@@ -32,7 +32,7 @@ git clone git@github.com:[YOUR_GITHUB_ACCOUNT_NAME]/multi-modal-starter-kit.git
 1. Create an .env file
 
 ```
-cd multi-modal-starter-kit/webapp
+cd multi-modal-starter-kit
 cp .env.example .env
 ```
 
@@ -47,19 +47,21 @@ cp .env.example .env
 3. Set Tigris bucket cors policy and bucket access policy
 
 - `fly storage update YOUR_BUCKET_NAME --public`
-- Run the following command under /webapp directory (make sure you have aws CLI installed and have run `aws configure`)
-- `aws s3api put-bucket-cors --bucket BUCKET_NAME --cors-configuration file://cors.json --endpoint-url https://fly.storage.tigris.dev/`
+- Make sure you have aws CLI installed and have run `aws configure` to set up your aws credentials
+- Run the following command to update CORS policy on the bucket
+  ```
+  aws s3api put-bucket-cors --bucket BUCKET_NAME --cors-configuration file://cors.json --endpoint-url https://fly.storage.tigris.dev/
+  ```
 
 ### Step 2: Create a test video
 
-- Run `aws configure` and fill in access id / secret.
-- `aws s3 cp PATH_TO_VIDEO_FILE s3://BUCKET_NAME --endpoint-url https://fly.storage.tigris.dev`
-
-We have a [sample video](https://www.pexels.com/video/chef-stretching-pizza-dough-5897985/) in the `assets` directory that you can use to test the app. You can run the following command if you want to test the app with this video:
+We have a [sample video](https://www.pexels.com/video/chef-stretching-pizza-dough-5897985/) in the `assets` directory that you can use to test the app. You can run the following command if you want to test the app with this video
 
 ```
 aws s3 cp ./assets/pasta-making.mp4 s3://BUCKET_NAME --endpoint-url https://fly.storage.tigris.dev`
 ```
+
+Alternatively you can also uploading your own videos.
 
 ### Step 3: Set up ElevenLabs
 
@@ -86,9 +88,10 @@ When narrating a very long video, Upstash Redis is used for pub/sub and notifies
 
 ### Step 6: Run App
 
-- cd `webapp`
-- `npm install`
-- `npm run dev`
+```
+npm install
+npm run dev
+```
 
 ## Useful Commands
 
