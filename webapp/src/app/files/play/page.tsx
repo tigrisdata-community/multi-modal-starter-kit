@@ -4,23 +4,21 @@ import { fetchAndPlayTextToSpeech, getModelName } from "@/app/actions";
 import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 let audio = new Audio("");
 
-window.addEventListener(
-    "keydown", (event) => {
-        if (event.code == "KeyV"){
-          if (audio.paused) {
-            console.log("Playing voice");
-            audio.play();
-          } else {
-              console.log("Muting voice");
-              console.log(audio);
-              audio.pause();
-            }
-        }
-    });
+window.addEventListener("keydown", (event) => {
+  if (event.code == "KeyV") {
+    if (audio.paused) {
+      console.log("Playing voice");
+      audio.play();
+    } else {
+      console.log("Muting voice");
+      console.log(audio);
+      audio.pause();
+    }
+  }
+});
 
 export default function Page({
   searchParams,
@@ -201,7 +199,7 @@ export default function Page({
 
   return (
     <>
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
+      <section className="flex justify-center items-center w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
