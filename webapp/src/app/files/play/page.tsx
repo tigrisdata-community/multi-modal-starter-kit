@@ -5,11 +5,12 @@ import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-let audio = new Audio("");
+let audio = 0;
+//let audio = new Audio("");
 
 window.addEventListener("keydown", (event) => {
   if (event.code == "KeyV") {
-    if (audio.paused) {
+    if (audio && audio.paused) {
       console.log("Playing voice");
       audio.play();
     } else {
