@@ -15,7 +15,7 @@ export async function VideoList() {
   const files: FilesResponse = await res.json();
   const mp4Files = files.filter((f) => f.key.endsWith(".mp4"));
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
+    <section className="flex justify-center items-center w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
       <div className="container px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <div className="space-y-2">
