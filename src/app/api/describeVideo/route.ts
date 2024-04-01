@@ -24,7 +24,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
     // need to pre-process video
     const videoFilePath = await downloadVideo(videoUrl, videoName);
 
-    // frames are stored temporarily in webapp/static/frames
+    // frames are stored temporarily in static/frames
     await videoToFrames(videoFilePath, videoName);
 
     await makeCollage(videoName, true);
