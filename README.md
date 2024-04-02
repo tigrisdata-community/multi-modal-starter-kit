@@ -4,6 +4,12 @@ A multi modal starter kit that can have AI narrate a video or scene of your choi
 
 Have questions? Join [AI Stack devs](https://discord.gg/TsWCNVvRP5).
 
+🎉 **Demo** (Sound ON 🔊)
+
+
+https://github.com/tigrisdata-community/multi-modal-starter-kit/assets/3489963/61ce3ae1-8705-4fb8-affe-4fb9581b8fda
+
+
 ## Stack
 
 - 💻 Video and Image hosting: [Tigris](https://www.tigrisdata.com/)
