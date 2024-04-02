@@ -4,6 +4,7 @@ import { fetchAndPlayTextToSpeech, getModelName } from "@/app/actions";
 import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import ollama from "ollama/browser";
 
 export default function Page({
   searchParams,
@@ -19,6 +20,8 @@ export default function Page({
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
   const [modelName, setModelName] = useState<string>("Unknown");
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement>();
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [selectedOllamaModel, setSelectedOllamaModel] = useState<string>();
 
   const [eventSource, setEventSource] = useState<any>(null);
   const initialized = useRef(false);
@@ -52,6 +55,33 @@ export default function Page({
     });
     return eventSource;
   }, []);
+
+  useEffect(() => {
+    if (modelName.startsWith("Ollama")) {
+      const fetchOllamaList = async () => {
+        const models = await ollama.list();
+
+        const modelList = models.models
+          .filter(
+            (m) => m.details.families && m.details.families.includes("clip")
+          )
+          .map((model) => model.name);
+
+        setOllamaModels(modelList);
+      };
+
+      fetchOllamaList();
+      const intervaId = setInterval(fetchOllamaList, 5000);
+      return () => clearInterval(intervaId);
+    }
+  }, [modelName]);
+
+  useEffect(() => {
+    if (selectedOllamaModel === undefined && ollamaModels.length > 0) {
+      setSelectedOllamaModel(ollamaModels[0]);
+    }
+    console.log("selectedOllamaModel: ", selectedOllamaModel);
+  }, [selectedOllamaModel, ollamaModels]);
 
   useEffect(() => {
     if (currentAudio) {
@@ -134,6 +164,7 @@ export default function Page({
       body: JSON.stringify({
         url: videoUrl,
         key: searchParams.name,
+        ollamaModel: selectedOllamaModel,
       }),
     });
   }
@@ -188,6 +219,7 @@ export default function Page({
         method: "POST",
         body: JSON.stringify({
           frames: dataURLs,
+          ollamaModel: selectedOllamaModel,
         }),
       }).then(async (response) => {
         setShowSpinner(false);
@@ -231,6 +263,22 @@ export default function Page({
                   </video>
 
                   <div className="flex justify-center space-x-4 my-4">
+                    {modelName.startsWith("Ollama") && (
+                      <select
+                        className="justify-left"
+                        value={selectedOllamaModel}
+                        onChange={(e) => setSelectedOllamaModel(e.target.value)}
+                      >
+                        {ollamaModels.map((model) => {
+                          return (
+                            <option key={model} value={model}>
+                              {model}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    )}
+
                     <Button
                       className="bg-black text-white"
                       onClick={captureFrame}
@@ -246,6 +294,7 @@ export default function Page({
                       Describe Video
                     </Button>
                   </div>
+
                   <div className="text-center">
                     <div className="mx-auto mt-6 max-w-prose space-y-2 mb-10 ml-0">
                       <p className="text-md font-semibold text-left">
