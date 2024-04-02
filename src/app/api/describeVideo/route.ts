@@ -10,6 +10,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
   const data = await req.json();
   const videoUrl = data.url;
   const videoName = data.key;
+  const ollamaModel = data.ollamaModel;
   const tigrisCollagesDir = process.env.COLLAGE_FOLDER_NAME || "collages";
 
   const collagesDir: string = `${tigrisCollagesDir}/${videoName}`;
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
   if (tigrisCollageContent.length > 0) {
     // collages already created
-    await makeCollage(videoName, false);
+    await makeCollage(videoName, false, ollamaModel);
   } else {
     // need to pre-process video
     const videoFilePath = await downloadVideo(videoUrl, videoName);
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
     // frames are stored temporarily in static/frames
     await videoToFrames(videoFilePath, videoName);
 
-    await makeCollage(videoName, true);
+    await makeCollage(videoName, true, ollamaModel);
   }
 
   return NextResponse.json("");

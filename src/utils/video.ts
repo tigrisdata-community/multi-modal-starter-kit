@@ -118,7 +118,8 @@ const setKey = "ai-responses";
 
 export async function makeCollage(
   videoName: string,
-  shouldCreateCollage: boolean
+  shouldCreateCollage: boolean,
+  ollamaModel?: string
 ) {
   const framesFullPath = path.join(framesDir, videoName);
   const files = fs.readdirSync(framesFullPath);
@@ -139,7 +140,11 @@ export async function makeCollage(
       console.log("collageUrl", collageUrl);
 
       // describing collages!
-      const result: any = await describeImageForVideo(collageUrl, context);
+      const result: any = await describeImageForVideo(
+        collageUrl,
+        context,
+        ollamaModel
+      );
       const publishStr = result.content + "COLLAGE_URL:" + collageUrl;
       await publishNotification(setKey, publishStr || "");
 
@@ -333,7 +338,11 @@ export default async function toBase64ImageUrl(
   return toBase64;
 }
 
-export async function describeImageForVideo(url: string, context: string = "") {
+export async function describeImageForVideo(
+  url: string,
+  context: string = "",
+  ollamaModel?: string
+) {
   const cachedResult = await redis.get(url);
   if (cachedResult) {
     return cachedResult;
@@ -347,8 +356,9 @@ export async function describeImageForVideo(url: string, context: string = "") {
   };
 
   if (useOllama) {
+    console.log("Ollama Model: ", ollamaModel);
     const response = await ollama.chat({
-      model: "llava",
+      model: ollamaModel || "llava",
       messages: [
         systemPrompt,
         {
