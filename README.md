@@ -48,7 +48,6 @@ cp .env.example .env
 - If you get a list of keys without values, destroy the bucket with `fly storage destroy` and try again.
 - Copy paste these values to your .env under "Tigris"
 - Note that the name for the storage bucket is `NEXT_PUBLIC_BUCKET_NAME`. If you copy/paste add the `NEXT_` part at the beginning
-- NOTE: What is COLLAGE_FOLER_NAME
 
 3. Set Tigris bucket cors policy and bucket access policy
 

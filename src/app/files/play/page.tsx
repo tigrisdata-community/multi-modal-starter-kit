@@ -4,6 +4,7 @@ import { fetchAndPlayTextToSpeech, getModelName } from "@/app/actions";
 import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 let audio = 0;
 //let audio = new Audio("");
@@ -51,7 +52,7 @@ export default function Page({
         }
 
         setNarration((currentNarration) => [...currentNarration, tmp.message]);
-        await queueAudio(tmp.message);
+        await queueAudio(tmp.message.split("COLLAGE_URL:")[0]);
       })(event);
     });
 
@@ -124,12 +125,6 @@ export default function Page({
     }
   };
 
-  const handlePlayVideo = () => {
-    if (vidRef.current != null) {
-      vidRef.current.play();
-    }
-  };
-
   async function describeVideo() {
     setShowSpinner(true);
     setNarration([]);
@@ -198,7 +193,7 @@ export default function Page({
         vidRef.current!.play();
         const restext = await response.text();
         setNarration([restext]);
-        await queueAudio(restext);
+        await queueAudio(restext.split("COLLAGE_URL:")[0]);
       });
     }
   }
@@ -290,11 +285,22 @@ export default function Page({
 
                     <div className="text-gray-600 text-left">
                       {narration.map((r, idx) => {
+                        const splitText = r.split("COLLAGE_URL:");
+                        const content = splitText[0];
+                        const collageUrl = splitText[1];
+
                         return (
                           <React.Fragment key={idx}>
                             <span className="flex items-center gap-2">
-                              {r}{" "}
-                            </span>
+                              {content}{" "}
+                            </span>{" "}
+                            <a
+                              href={collageUrl}
+                              target="_blank"
+                              className="text-blue-500 hover:text-blue-700"
+                            >
+                              What AI sees
+                            </a>
                             <br />
                             <br />
                           </React.Fragment>

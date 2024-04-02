@@ -32,8 +32,7 @@ const useOllama = process.env.USE_OLLAMA === "true";
 const framesDir = path.join(process.cwd(), "static", "frames");
 const videoDir = path.join(process.cwd(), "static", "video");
 const frameRate = 10;
-const tigrisFramesDir = process.env.FRAME_FOLER_NAME || "frames";
-const tigrisCollagesDir = process.env.COLLAGE_FOLER_NAME || "collages";
+const tigrisCollagesDir = process.env.COLLAGE_FOLDER_NAME || "collages";
 
 type LLMOutput = {
   detected: string;
@@ -141,7 +140,8 @@ export async function makeCollage(
 
       // describing collages!
       const result: any = await describeImageForVideo(collageUrl, context);
-      await publishNotification(setKey, result.content || "");
+      const publishStr = result.content + "COLLAGE_URL:" + collageUrl;
+      await publishNotification(setKey, publishStr || "");
 
       //TODO - should retry if OAI says it't can't help with the request
       context += result.content + " ";
@@ -162,7 +162,9 @@ export async function makeCollage(
       for (let i = 0; i < collages.length; i++) {
         const collageUrl = `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${collages[i].Key}`;
         const result: any = await describeImageForVideo(collageUrl, context);
-        await publishNotification(setKey, result.content || "");
+        const publishStr = result.content + "COLLAGE_URL:" + collageUrl;
+        console.log("publishStr", publishStr);
+        await publishNotification(setKey, publishStr || "");
         context += result.content + " ";
 
         if (i >= collages.length - 1) {
@@ -264,9 +266,7 @@ export async function createCollage(
 export async function fetchLatestFromTigris() {
   const listObjectsV2Command = new ListObjectsV2Command({
     Bucket: process.env.NEXT_PUBLIC_BUCKET_NAME,
-    Prefix: process.env.COLLAGE_FOLER_NAME
-      ? `${process.env.COLLAGE_FOLER_NAME!}/`
-      : "",
+    Prefix: `${tigrisCollagesDir}/`,
   });
   const resp = await client.send(listObjectsV2Command);
   if (!resp.Contents || resp.Contents.length === 0) {
