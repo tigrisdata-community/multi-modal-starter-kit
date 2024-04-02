@@ -177,10 +177,15 @@ export default function Page({
       let dataURLs: string[] = [];
       for (const time of captureTimes) {
         vidRef.current.currentTime = time;
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        context.drawImage(vidRef.current, 0, 0, 640, 400);
-        const dataURL = canRef.current.toDataURL("image/jpeg", 1);
-        dataURLs.push(dataURL);
+        await new Promise((resolve) => {
+          vidRef.current!.addEventListener("seeked", function onSeeked() {
+            context.drawImage(vidRef.current!, 0, 0, 640, 400);
+            const dataURL = canRef.current!.toDataURL("image/jpeg", 1);
+            dataURLs.push(dataURL);
+            vidRef.current!.removeEventListener("seeked", onSeeked);
+            resolve("done");
+          });
+        });
       }
 
       fetch(`/api/describe/`, {
