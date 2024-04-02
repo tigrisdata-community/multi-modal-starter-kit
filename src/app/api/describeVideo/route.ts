@@ -10,7 +10,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
   const data = await req.json();
   const videoUrl = data.url;
   const videoName = data.key;
-  const tigrisCollagesDir = process.env.COLLAGE_FOLER_NAME || "collages";
+  const tigrisCollagesDir = process.env.COLLAGE_FOLDER_NAME || "collages";
 
   const collagesDir: string = `${tigrisCollagesDir}/${videoName}`;
   console.log("collagesDir: ", collagesDir);
