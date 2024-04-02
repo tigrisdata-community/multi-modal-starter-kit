@@ -31,7 +31,7 @@ const useOllama = process.env.USE_OLLAMA === "true";
 
 const framesDir = path.join(process.cwd(), "static", "frames");
 const videoDir = path.join(process.cwd(), "static", "video");
-const frameRate = 10;
+const frameRate = 30;
 const tigrisCollagesDir = process.env.COLLAGE_FOLDER_NAME || "collages";
 
 type LLMOutput = {

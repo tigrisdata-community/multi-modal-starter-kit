@@ -5,22 +5,6 @@ import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-let audio = 0;
-//let audio = new Audio("");
-
-window.addEventListener("keydown", (event) => {
-  if (event.code == "KeyV") {
-    if (audio && audio.paused) {
-      console.log("Playing voice");
-      audio.play();
-    } else {
-      console.log("Muting voice");
-      console.log(audio);
-      audio.pause();
-    }
-  }
-});
-
 export default function Page({
   searchParams,
 }: {
@@ -34,6 +18,7 @@ export default function Page({
   const [audioQueue, setAudioQueue] = useState<string[]>([]);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
   const [modelName, setModelName] = useState<string>("Unknown");
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement>();
 
   const [eventSource, setEventSource] = useState<any>(null);
   const initialized = useRef(false);
@@ -69,6 +54,22 @@ export default function Page({
   }, []);
 
   useEffect(() => {
+    if (currentAudio) {
+      window.addEventListener("keydown", (event) => {
+        if (event.code == "KeyV") {
+          if (currentAudio && currentAudio.paused) {
+            console.log("Playing voice");
+            currentAudio.play();
+          } else {
+            console.log("Muting voice");
+            currentAudio.pause();
+          }
+        }
+      });
+    }
+  }, [currentAudio]);
+
+  useEffect(() => {
     (async () => {
       const modelName = await getModelName();
       setModelName(modelName);
@@ -98,7 +99,8 @@ export default function Page({
   // Play audio from post response from 11 labs
   async function pAudio(url: string) {
     setIsAudioPlaying(true);
-    audio = new Audio(url);
+    let audio = new Audio(url);
+    setCurrentAudio(audio);
 
     await audio
       .play()
@@ -166,7 +168,7 @@ export default function Page({
       vidRef.current.pause();
       const context = canRef.current.getContext("2d")!;
       const currentTime = vidRef.current.currentTime;
-      const captureTimes = calculateCaptureTimes(currentTime, 5, 5, 0);
+      const captureTimes = calculateCaptureTimes(currentTime, 10, 5, 0);
       console.log("captureTimes", captureTimes);
       let dataURLs: string[] = [];
       for (const time of captureTimes) {
@@ -215,8 +217,6 @@ export default function Page({
                 key="1"
                 className="flex flex-col items-center justify-center p-8 bg-white"
               >
-                {/* <h3>Playing video from Tigris:</h3>
-        <p>{videoUrl}</p> */}
                 <div className="w-full max-w-2xl">
                   <video
                     ref={vidRef}

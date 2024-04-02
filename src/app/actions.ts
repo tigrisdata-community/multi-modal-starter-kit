@@ -40,11 +40,10 @@ export async function fetchAndPlayTextToSpeech(
         `https://api.elevenlabs.io/v1/text-to-speech/${process.env.XI_VOICE_ID!}`,
         options
       );
-
       if (response.status !== 200) {
         console.error(
           "Unable to create elevenlabs audio. Error: " +
-            JSON.stringify(response)
+            JSON.stringify(await response.json())
         );
         return;
       }
