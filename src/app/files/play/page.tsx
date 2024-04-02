@@ -166,7 +166,7 @@ export default function Page({
       vidRef.current.pause();
       const context = canRef.current.getContext("2d")!;
       const currentTime = vidRef.current.currentTime;
-      const captureTimes = calculateCaptureTimes(currentTime, 5, 5, 0);
+      const captureTimes = calculateCaptureTimes(currentTime, 10, 5, 0);
       console.log("captureTimes", captureTimes);
       let dataURLs: string[] = [];
       for (const time of captureTimes) {
@@ -215,8 +215,6 @@ export default function Page({
                 key="1"
                 className="flex flex-col items-center justify-center p-8 bg-white"
               >
-                {/* <h3>Playing video from Tigris:</h3>
-        <p>{videoUrl}</p> */}
                 <div className="w-full max-w-2xl">
                   <video
                     ref={vidRef}
