@@ -39,15 +39,21 @@ cp .env.example .env
 2. Set up Tigris
 
 - Make sure you have a fly.io account and have fly CLI installed on your computer
-- `cd multi-modal-starter-kit` and run `fly storage create`
+- `cd multi-modal-starter-kit`
+- Pick a name for your version of your app. App names on fly are global, so it has to be unique. For example `multi-modal-awesomeness`
+- Create the app on fly with `fly app create <your app name>` so for example `fly app create multi-modal-awesomeness`
+- Create the storage with `fly storage create`
 - You should get a list of credentials like below:
   <img width="859" alt="Screenshot 2024-03-24 at 5 40 36 PM" src="https://github.com/tigrisdata-community/multi-modal-starter-kit/assets/3489963/a400d444-8d5f-445e-a48a-1749f7595c47">
+- If you get a list of keys without values, destroy the bucket with `fly storage destroy` and try again.
 - Copy paste these values to your .env under "Tigris"
+- Note that the name for the storage bucket is `NEXT_PUBLIC_BUCKET_NAME`. If you copy/paste add the `NEXT_` part at the beginning
+- NOTE: What is COLLAGE_FOLER_NAME
 
 3. Set Tigris bucket cors policy and bucket access policy
 
 - `fly storage update YOUR_BUCKET_NAME --public`
-- Make sure you have aws CLI installed and have run `aws configure` to set up your aws credentials
+- Make sure you have aws CLI installed and run `aws configure`. Enter the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` printed above. Note that these are not actual Amazon Web Services credentials, but Tigris credentials. If you have the aws CLI already configured for Amazon, it will overwrite those values.
 - Run the following command to update CORS policy on the bucket
   ```
   aws s3api put-bucket-cors --bucket BUCKET_NAME --cors-configuration file://cors.json --endpoint-url https://fly.storage.tigris.dev/
