@@ -4,7 +4,6 @@ import { fetchAndPlayTextToSpeech, getModelName } from "@/app/actions";
 import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 let audio = 0;
 //let audio = new Audio("");
@@ -235,12 +234,14 @@ export default function Page({
                     <Button
                       className="bg-black text-white"
                       onClick={captureFrame}
+                      disabled={showSpinner}
                     >
                       Capture
                     </Button>
                     <Button
                       className="bg-black text-white"
                       onClick={describeVideo}
+                      disabled={showSpinner}
                     >
                       Describe Video
                     </Button>
