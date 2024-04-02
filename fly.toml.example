@@ -3,7 +3,11 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'multi-modal-starter-kit'
+# REQUIRED: Change the name of the app below, it has to be unique for all fly users
+# You can access your app at https://my-app-name.fly.dev/
+app = 'my-app-name'
+
+# Optional: You can reduce latency by picking a region close to you. Default is San Jose, California.
 primary_region = 'sjc'
 
 [build]

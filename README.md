@@ -40,15 +40,16 @@ cp .env.example .env
 
 - Make sure you have a fly.io account and have fly CLI installed on your computer
 - `cd multi-modal-starter-kit`
-- Pick a name for your version of your app. App names on fly are global, so it has to be unique. For example `multi-modal-awesomeness`
-- Create the app on fly with `fly app create <your app name>` so for example `fly app create multi-modal-awesomeness`
+- Pick a name for your app, it has to be globally unique.
+- Copy the `fly.toml.example` file to `fly.toml` and set the app name, e.g. `app = '<your app name>'`. Optionally change the region to a location closer to you.
+- Create the app on fly with `fly app create <your app name>`
 - Create the storage with `fly storage create`
 - You should get a list of credentials like below:
   <img width="859" alt="Screenshot 2024-03-24 at 5 40 36 PM" src="https://github.com/tigrisdata-community/multi-modal-starter-kit/assets/3489963/a400d444-8d5f-445e-a48a-1749f7595c47">
 - If you get a list of keys without values, destroy the bucket with `fly storage destroy` and try again.
 - Copy paste these values to your .env under "Tigris"
-- Note that the name for the storage bucket is `NEXT_PUBLIC_BUCKET_NAME`. If you copy/paste add the `NEXT_` part at the beginning
-- NOTE: What is COLLAGE_FOLER_NAME
+- The name for the storage bucket is `NEXT_PUBLIC_BUCKET_NAME`, so if you copy/paste don't forget to add `NEXT_PUBLIC_` at the beginning
+- Set the COLLAGE_FOLDER_NAME to any name that you like.
 
 3. Set Tigris bucket cors policy and bucket access policy
 
