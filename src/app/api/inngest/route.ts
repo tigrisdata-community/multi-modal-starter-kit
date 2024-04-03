@@ -1,3 +1,5 @@
+'use client';
+
 import { serve } from "inngest/next";
 import { inngest } from "../../../inngest/client";
 import { inngestTick, sendEmail } from "../../../inngest/function";

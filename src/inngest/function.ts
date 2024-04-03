@@ -1,7 +1,7 @@
 import { describeImage, fetchLatestFromTigris } from "@/utils/video";
+import { inngest } from "./client";
 import { notifyViaEmail } from "@/utils/email";
 import { ratelimit } from "@/utils/ratelimit";
-import { inngest } from "./client";
 
 export const inngestTick = inngest.createFunction(
   { id: "tick" },
