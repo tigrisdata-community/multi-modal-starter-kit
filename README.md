@@ -13,7 +13,7 @@ https://github.com/tigrisdata-community/multi-modal-starter-kit/assets/3489963/6
 ## Stack
 
 - 💻 Video and Image hosting: [Tigris](https://www.tigrisdata.com/)
-- 🦙 Inference: [Ollama](https://github.com/jmorganca/ollama), with options to use [Replicate](https://replicate.com/) or OpenAI
+- 🦙 Inference: [Ollama](https://github.com/jmorganca/ollama), with options to use OpenAI
 - 💾 Caching: [Upstash](https://upstash.com/)
 - 🤔 AI response pub/sub: [Upstash](https://upstash.com/)
 - 📢 Video narration: [ElevenLabs](https://elevenlabs.io/)
@@ -74,12 +74,37 @@ aws s3 cp ./assets/pasta-making.mp4 s3://BUCKET_NAME --endpoint-url https://fly.
 
 Alternatively you can also uploading your own videos.
 
-### Step 3: Set up ElevenLabs
+
+### Step 3: Set up Ollama / Llava
+
+By Default the app uses Ollama / llava for vision. If you want to use OpenAI Chatgpt4v instead, you can set `USE_OLLAMA=false` and fill in `OPENAI_API_KEY` in .env
+
+There are two ways to get Ollama up and running. You can either use [Fly GPU](https://fly.io/gpu), which provides very fast inference, or use your laptop. 
+
+**Option 1: Fly GPU**
+- Make sure you have a [Fly](https://fly.io/) account and [flyctl installed](https://fly.io/docs/hands-on/install-flyctl/)
+- Fork [ollama-demo](https://github.com/fly-apps/ollama-demo?tab=readme-ov-file), edit fly.toml to rename the app, and run `fly launch`
+- Under the ollama-demo directory, run `fly console ssh` -- once you have ssh'd into the instance, run `ollama pull llava` -- by default, this pulls the llava7b model, but you could also pull other vision models to use with your app, such as: 
+```
+ollama pull llava:34b
+ollama pull llava:7b-v1.6-vicuna-q4_0
+...
+```
+- You should get a `hostname` once `fly launch` succeeds, copy paste this value to `OLLAMA_HOST` in `.env`
+Your app will now use this Fly GPU for instance. 
+
+**Option 2: Your laptop**
+- [Install Ollama](https://ollama.com/download)
+- Run `ollama pull llava` on your terminal. Like mentioned under Option 1, you can also pull other models to compare the results. 
+- (optional) Watch requests coming into Ollama by running this in a new terminal tab `tail -f ~/.ollama/logs/server.log`
+
+
+### Step 4: Set up ElevenLabs
 
 - Go to https://elevenlabs.io/, log in, and click on your profile picture on lower left. Select "Profile + API key". Copy the API key and save it as `XI_API_KEY` in the .env file
 - Select a 11labs voice by clicking on "Voices" on the left side nav bar and navigate to "VoiceLab". Copy the voice ID and save it as `XI_VOICE_ID` in .env
 
-### Step 4: Set up Upstash
+### Step 5: Set up Upstash
 
 When narrating a very long video, Upstash Redis is used for pub/sub and notifies the client when new snippets of reply come back. Upstash is also used for the critical task of caching video/images so the subsequent requests don't take long.
 
@@ -89,13 +114,6 @@ When narrating a very long video, Upstash Redis is used for pub/sub and notifies
   <img width="937" alt="Screenshot 2024-03-24 at 5 49 50 PM" src="https://github.com/tigrisdata-community/multi-modal-starter-kit/assets/3489963/126ebb25-0150-4efb-b9af-2edeed05e3c3">
 - On the same page, scroll down to the "Rest API" section and copy paste everything under ".env" tab to your .env file
   <img width="954" alt="Screenshot 2024-03-24 at 5 52 25 PM" src="https://github.com/tigrisdata-community/multi-modal-starter-kit/assets/3489963/2d506eb2-f019-4f0d-8b51-d1efa1d95bc5">
-
-### Step 5: Set up Ollama / Llava
-
-- By Default the app uses Ollama / llava for vision. If you want to use OpenAI Chatgpt4v instead, you can set `USE_OLLAMA=false` and fill in `OPENAI_API_KEY` in .env
-- [Install Ollama](https://ollama.com/download)
-- `ollama pull llava`
-- (optional) Watch requests coming into Ollama by running this in a new terminal tab `tail -f ~/.ollama/logs/server.log`
 
 ### Step 6: Run App
 
