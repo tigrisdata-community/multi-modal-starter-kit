@@ -233,7 +233,7 @@ export default function Page({
 
   return (
     <>
-      <section className="flex justify-center items-center w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
+      <section className="flex min-h-screen justify-center items-center w-full bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
@@ -296,7 +296,7 @@ export default function Page({
                   </div>
 
                   <div className="text-center">
-                    <div className="mx-auto mt-6 max-w-prose space-y-2 mb-10 ml-0">
+                    <div className="mx-auto mt-6 max-w-prose space-y-2 mb-10 ml-0 max-h-64">
                       <p className="text-md font-semibold text-left">
                         🎥 Video & Image Hosting:{" "}
                         <a
@@ -329,11 +329,8 @@ export default function Page({
                         </a>
                       </p>
                     </div>
-                    {/* <h2 className="text-xl font-semibold mb-4 text-left">
-              Narration: {modelName}
-            </h2> */}
 
-                    <div className="text-gray-600 text-left">
+                    <div className="text-gray-600 text-left overflow-auto max-h-96">
                       {narration.map((r, idx) => {
                         const splitText = r.split("COLLAGE_URL:");
                         const content = splitText[0];

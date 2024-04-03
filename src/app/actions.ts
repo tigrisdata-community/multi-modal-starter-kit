@@ -83,5 +83,8 @@ function isEmpty(val: string | undefined | null) {
 
 // Remove all " and ' when passing to eleven labs.
 function addslashes(str: string) {
-  return (str + "").replaceAll('"', "").replaceAll("'", "");
+  return (str + "")
+    .replaceAll('"', "")
+    .replaceAll("'", "")
+    .replaceAll("\n", "");
 }
