@@ -1,10 +1,13 @@
 "use client";
 
-import { fetchAndPlayTextToSpeech, getModelName } from "@/app/actions";
+import {
+  fetchAndPlayTextToSpeech,
+  getModelName,
+  listModels,
+} from "@/app/actions";
 import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import ollama from "ollama/browser";
 
 export default function Page({
   searchParams,
@@ -59,7 +62,7 @@ export default function Page({
   useEffect(() => {
     if (modelName.startsWith("Ollama")) {
       const fetchOllamaList = async () => {
-        const models = await ollama.list();
+        const models = await listModels();
 
         const modelList = models.models
           .filter(
