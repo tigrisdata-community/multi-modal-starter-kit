@@ -1,8 +1,9 @@
 ## Multi Modal Starter Kit 🤖📽️
 
-A multi modal starter kit that can have AI narrate a video or scene of your choice. Includes examples of how to do video processing, frames extraction, and sending frames to AI models optimally. Cost $0 to run. 
+A multi modal starter kit that can have AI narrate a video or scene of your choice. Includes examples of how to do video processing, frames extraction, and sending frames to AI models optimally. Cost $0 to run.
 
 **Works with the following models 👇🦙**
+
 - [LLaVa](https://ollama.com/library/llava) (powered by Ollama)
 - [LLaVa-vicuna](https://ollama.com/library/llava:7b-v1.6-vicuna-q4_0) (powered by Ollama)
 - [BakLLaVA](https://ollama.com/library/bakllava) (powered by Ollama)
@@ -13,13 +14,7 @@ Have questions? Join [AI Stack devs](https://discord.gg/TsWCNVvRP5) #multi-modal
 
 🎉 **Demo** (Sound ON 🔊)
 
-
-
-
 https://github.com/tigrisdata-community/multi-modal-starter-kit/assets/3489963/4bb6d8d2-0852-49a3-80ed-aeaf6cc71661
-
-
-
 
 ## Stack
 
@@ -29,6 +24,7 @@ https://github.com/tigrisdata-community/multi-modal-starter-kit/assets/3489963/4
 - 💾 Caching: [Upstash](https://upstash.com/)
 - 🤔 AI response pub/sub: [Upstash](https://upstash.com/)
 - 📢 Video narration: [ElevenLabs](https://elevenlabs.io/)
+- 🗺️ Workflow orchestration: [Inngest](https://www.inngest.com/)
 - 🖼️ App logic: [Next.js](https://nextjs.org/)
 - 🖌️ UI: [Vercel v0](https://v0.dev/)
 
@@ -86,30 +82,32 @@ aws s3 cp ./assets/pasta-making.mp4 s3://BUCKET_NAME --endpoint-url https://fly.
 
 Alternatively you can also uploading your own videos.
 
-
 ### Step 3: Set up Ollama / Llava
 
 By Default the app uses Ollama / llava for vision. If you want to use OpenAI Chatgpt4v instead, you can set `USE_OLLAMA=false` and fill in `OPENAI_API_KEY` in .env
 
-There are two ways to get Ollama up and running. You can either use [Fly GPU](https://fly.io/gpu), which provides very fast inference, or use your laptop. 
+There are two ways to get Ollama up and running. You can either use [Fly GPU](https://fly.io/gpu), which provides very fast inference, or use your laptop.
 
 **Option 1: Fly GPU**
+
 - Make sure you have a [Fly](https://fly.io/) account and [flyctl installed](https://fly.io/docs/hands-on/install-flyctl/)
 - Fork [ollama-demo](https://github.com/fly-apps/ollama-demo?tab=readme-ov-file), edit fly.toml to rename the app, and run `fly launch`
-- Under the ollama-demo directory, run `fly console ssh` -- once you have ssh'd into the instance, run `ollama pull llava` -- by default, this pulls the llava7b model, but you could also pull other vision models to use with your app, such as: 
+- Under the ollama-demo directory, run `fly console ssh` -- once you have ssh'd into the instance, run `ollama pull llava` -- by default, this pulls the llava7b model, but you could also pull other vision models to use with your app, such as:
+
 ```
 ollama pull llava:34b
 ollama pull llava:7b-v1.6-vicuna-q4_0
 ...
 ```
+
 - You should get a `hostname` once `fly launch` succeeds, copy paste this value to `OLLAMA_HOST` in `.env`
-Your app will now use this Fly GPU for instance. 
+  Your app will now use this Fly GPU for instance.
 
 **Option 2: Your laptop**
-- [Install Ollama](https://ollama.com/download)
-- Run `ollama pull llava` on your terminal. Like mentioned under Option 1, you can also pull other models to compare the results. 
-- (optional) Watch requests coming into Ollama by running this in a new terminal tab `tail -f ~/.ollama/logs/server.log`
 
+- [Install Ollama](https://ollama.com/download)
+- Run `ollama pull llava` on your terminal. Like mentioned under Option 1, you can also pull other models to compare the results.
+- (optional) Watch requests coming into Ollama by running this in a new terminal tab `tail -f ~/.ollama/logs/server.log`
 
 ### Step 4: Set up ElevenLabs
 
@@ -134,9 +132,44 @@ npm install
 npm run dev
 ```
 
+### [Optional] Step 7: Production-ready workflow orchestration
+
+There is an example in the repo that leverages Inngest for workflow orchestration -- Inngest is especially helpful here when you have a long-running workflow and does automatic retries. Example code is in `src/inngest/functions.ts`.
+
+In this example, Inngest waits for new images to upload to Tigris, then sends the image to Ollama/OpenAI for processing. The `"describe-image"` step is auto-retried when there is a failure or returned JSON is malformed.
+
+```typescript
+export const inngestTick = inngest.createFunction(
+  { id: "tick" },
+  { cron: "* * * * *" },
+  async ({ step }) => {
+    await step.run("fetch-latest-snapshot", async () => {
+      return await fetchLatestFromTigris();
+    });
+
+    const result = await step.waitForEvent("Tigris.complete", {
+      event: "Tigris.complete",
+      timeout: "1m",
+    });
+
+    const url = result?.data.url;
+    console.log("url", url);
+    if (!!url) {
+      await step.run("describe-image", async () => {
+        return await describeImage(url);
+      });
+    }
+  }
+);
+```
+
 ## Useful Commands
 
 Tigris is 100% aws cli compatible. Here are some frequently used commands during active development:
+
+### Pause voice
+
+Press 'v' to toggle the voice. This pauses the voice so it will resume at the point it was paused.
 
 ### Check Tigris Dashboard
 
@@ -152,10 +185,6 @@ and are not cleaned up. To clean these up, you can run the following from the CL
 ```
 aws s3 rm s3://BUCKET_NAME/ --endpoint-url https://fly.storage.tigris.dev --recursive --exclude "*.mp4"
 ```
-
-### Pause voice
-
-Press 'v' to toggle the voice. This pauses the voice so it will resume at the point it was paused.
 
 ### Upload videos
 

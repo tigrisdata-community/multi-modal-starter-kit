@@ -419,7 +419,7 @@ export async function describeImageForVideo(
   }
 }
 
-// TODO - this is for testing out Inngest
+// TODO - this is for an upcoming release on taking in images captured by RPi and send alerts to users. Stay tuned!
 export async function describeImage(url: string) {
   const chatCompletion = await openai.chat.completions.create({
     messages: [
