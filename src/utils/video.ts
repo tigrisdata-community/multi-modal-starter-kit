@@ -13,7 +13,7 @@ import fetch from "node-fetch";
 import fs from "fs";
 import path from "path";
 import sharp from "sharp";
-import ollama from "ollama";
+import { Ollama } from "ollama";
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 import { Redis } from "@upstash/redis";
 
@@ -24,6 +24,9 @@ const openai = new OpenAI({
 });
 const client = new S3Client();
 const redis = Redis.fromEnv();
+const ollama = new Ollama({
+  host: process.env.OLLAMA_HOST || "http://localhost:11434",
+});
 const useOllama = process.env.USE_OLLAMA === "true";
 
 //TODO - for debugging
@@ -38,6 +41,10 @@ type LLMOutput = {
   detected: string;
   comment: string;
 };
+
+export async function listOllamaModels() {
+  return ollama.list();
+}
 
 export async function downloadVideo(url: string, videoName: string) {
   const filePath = path.join(videoDir, videoName);
@@ -355,6 +362,14 @@ export async function describeImageForVideo(
       `,
   };
 
+  const prompt = `These are frames from an old movie with one or more pictures. 
+  Generate a funny description of the image or a sequence of images. Make your narrative continuous and natural based on what you have said before. Really roast the movie.
+  Previously you have described other frames from the same video, here is what you said: ${context}. 
+  
+  Make your description unique and not repetitive please!. Also, please keep it to only a few sentances.
+
+  "`;
+
   if (useOllama) {
     console.log("Ollama Model: ", ollamaModel);
     const response = await ollama.chat({
@@ -363,12 +378,7 @@ export async function describeImageForVideo(
         systemPrompt,
         {
           role: "user",
-          content: `These are frames from an old science fiction movie with one or more pictures. 
-          Generate a funny description of the image or a sequence of images.  Really roast the movie. 
-          Make the answer ONE SENTENCE only please.
-          Previously you have described other frames from the same video, here is what you said: ${context}. 
-          
-          Make your description unique and not repetitive please!. Also, please keep it to only a few sentances.`,
+          content: prompt,
           images: [await toBase64ImageUrl(url)],
         },
       ],
@@ -386,13 +396,7 @@ export async function describeImageForVideo(
           content: [
             {
               type: "text",
-              text: `These are frames from an old science fiction movie with one or more pictures. 
-          Generate a funny description of the image or a sequence of images.  Really roast the movie.
-          Previously you have described other frames from the same video, here is what you said: ${context}. 
-          
-          Make your description unique and not repetitive please!. Also, please keep it to only a few sentances.
-  
-          "`,
+              text: prompt,
             },
             {
               type: "image_url",

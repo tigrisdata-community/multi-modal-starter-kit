@@ -1,5 +1,6 @@
 "use server";
 
+import { listOllamaModels } from "@/utils/video";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Redis } from "@upstash/redis";
 
@@ -8,6 +9,10 @@ const redis = Redis.fromEnv();
 
 export async function getModelName() {
   return process.env.USE_OLLAMA === "true" ? "Ollama (LLaVA)" : "OpenAI";
+}
+
+export async function listModels() {
+  return await listOllamaModels();
 }
 
 export async function fetchAndPlayTextToSpeech(
@@ -83,5 +88,8 @@ function isEmpty(val: string | undefined | null) {
 
 // Remove all " and ' when passing to eleven labs.
 function addslashes(str: string) {
-  return (str + "").replaceAll('"', "").replaceAll("'", "");
+  return (str + "")
+    .replaceAll('"', "")
+    .replaceAll("'", "")
+    .replaceAll("\n", "");
 }
