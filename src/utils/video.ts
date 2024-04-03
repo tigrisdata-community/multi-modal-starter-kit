@@ -173,7 +173,11 @@ export async function makeCollage(
     } else {
       for (let i = 0; i < collages.length; i++) {
         const collageUrl = `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${collages[i].Key}`;
-        const result: any = await describeImageForVideo(collageUrl, context);
+        const result: any = await describeImageForVideo(
+          collageUrl,
+          context,
+          ollamaModel
+        );
         const publishStr = result.content + "COLLAGE_URL:" + collageUrl;
         console.log("publishStr", publishStr);
         await publishNotification(setKey, publishStr || "");
