@@ -1,7 +1,7 @@
 # syntax = docker/dockerfile:1
 
 # Adjust NODE_VERSION as desired
-ARG NODE_VERSION=21.6.2
+ARG NODE_VERSION=21.7.1
 FROM node:${NODE_VERSION}-slim as base
 
 LABEL fly_launch_runtime="Next.js"
@@ -36,6 +36,11 @@ RUN npm prune --omit=dev
 
 # Final stage for app image
 FROM base
+
+# Install packages needed for deployment
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y ffmpeg && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Copy built application
 COPY --from=build /app /app

@@ -6,6 +6,8 @@ import {
 } from "@/utils/video";
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest, res: NextResponse) {
   const data = await req.json();
   const videoUrl = data.url;

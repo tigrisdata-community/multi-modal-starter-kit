@@ -132,7 +132,40 @@ npm install
 npm run dev
 ```
 
-### [Optional] Step 7: Production-ready workflow orchestration
+### Step 7: Deploying on fly
+By now you should have a functional app, let's deploy it to [fly.io](https://fly.io/) cloud account that you setup in Step 1.
+- First, lets see what secrets are already available in our app using `fly secrets list`:
+```bash
+$ ➔  fly secrets list
+NAME                            DIGEST         CREATED AT
+AWS_ACCESS_KEY_ID               xxxxxxx        Feb 23 2024 20:33
+AWS_ENDPOINT_URL_S3             xxxxxxx        Feb 23 2024 20:33
+AWS_REGION                      xxxxxxx        Feb 23 2024 20:33
+AWS_SECRET_ACCESS_KEY           xxxxxxx        Feb 23 2024 20:33
+BUCKET_NAME                     xxxxxxx        Feb 23 2024 20:33
+```
+- We need to match the secrets as in `.env.example` file. Rename the `BUCKET_NAME` secret to `NEXT_PUBLIC_BUCKET_NAME`:
+```bash
+$ ➔ fly secrets set NEXT_PUBLIC_BUCKET_NAME=<YOUR BUCKET NAME>
+$ ➔ fly secrets unset BUCKET_NAME
+```
+- Now, all other environment vars:
+```bash
+$ ➔ fly secrets set OPENAI_API_KEY=<YOUR KEY HERE>
+$ ➔ fly secrets set UPSTASH_REDIS_URL=<UPSTASH REDIS URL HERE>
+$ ➔ fly secrets set UPSTASH_REDIS_REST_URL=<UPSTASH REDIS REST URL HERE>
+$ ➔ fly secrets set UPSTASH_REDIS_REST_TOKEN=<UPSTASH REDIS REST TOKEN HERE>
+$ ➔ fly secrets set XI_API_KEY=<XI API KEY>
+$ ➔ fly secrets set XI_VOICE_ID=<XI VOICE ID>
+```
+- Once environment is all set, we can make the app fly:
+```bash
+$ ➔ fly launch
+$ ➔ fly deploy
+```
+> [fly.io instructions for NextJS](https://fly.io/docs/js/frameworks/nextjs/)
+
+### [Optional] Step 8: Production-ready workflow orchestration
 
 There is an example in the repo that leverages Inngest for workflow orchestration -- Inngest is especially helpful here when you have a long-running workflow and does automatic retries. Example code is in `src/inngest/functions.ts`.
 

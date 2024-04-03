@@ -23,9 +23,12 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "", // This is the default and can be omitted
 });
 const client = new S3Client();
-const redis = Redis.fromEnv();
 const ollama = new Ollama({
   host: process.env.OLLAMA_HOST || "http://localhost:11434",
+});
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL || "",
+  token: process.env.UPSTASH_REDIS_REST_TOKEN || ""
 });
 const useOllama = process.env.USE_OLLAMA === "true";
 

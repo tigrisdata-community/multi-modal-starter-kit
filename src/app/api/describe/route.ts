@@ -1,6 +1,8 @@
 import { describeImageForVideo, createCollage } from "@/utils/video";
 import { NextRequest } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   const request = await req.json();
   const videoUrls = request["frames"];
