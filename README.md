@@ -1,13 +1,24 @@
 ## Multi Modal Starter Kit 🤖📽️
 
-A multi modal starter kit that can have AI narrate a video or scene of your choice. Includes examples of how to do video processing, frames extraction, and sending frames to AI models optimally.
+A multi modal starter kit that can have AI narrate a video or scene of your choice. Includes examples of how to do video processing, frames extraction, and sending frames to AI models optimally. Cost $0 to run. 
 
-Have questions? Join [AI Stack devs](https://discord.gg/TsWCNVvRP5).
+**Works with the following models 👇🦙**
+- [LLaVa](https://ollama.com/library/llava) (powered by Ollama)
+- [LLaVa-vicuna](https://ollama.com/library/llava:7b-v1.6-vicuna-q4_0) (powered by Ollama)
+- [BakLLaVA](https://ollama.com/library/bakllava) (powered by Ollama)
+- ...and many others on https://ollama.com/library
+- GPT-4v
+
+Have questions? Join [AI Stack devs](https://discord.gg/TsWCNVvRP5) #multi-modal-starter-kit
 
 🎉 **Demo** (Sound ON 🔊)
 
 
-https://github.com/tigrisdata-community/multi-modal-starter-kit/assets/3489963/61ce3ae1-8705-4fb8-affe-4fb9581b8fda
+
+
+https://github.com/tigrisdata-community/multi-modal-starter-kit/assets/3489963/4bb6d8d2-0852-49a3-80ed-aeaf6cc71661
+
+
 
 
 ## Stack
