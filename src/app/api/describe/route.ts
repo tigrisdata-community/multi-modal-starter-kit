@@ -6,12 +6,14 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest) {
   const request = await req.json();
   const videoUrls = request["frames"];
-  const ollamaModel = request["ollamaModel"];
+  const modelName = request["modelName"];
+  const inferencePlatform = request["inferencePlatform"];
   const collageUrl = await createCollage(videoUrls, 0, "test-video-name", true);
   const aiResponse: any = await describeImageForVideo(
     collageUrl,
     "",
-    ollamaModel
-  );
+    inferencePlatform,
+    modelName
+);
   return new Response(aiResponse.content + "COLLAGE_URL:" + collageUrl);
 }
