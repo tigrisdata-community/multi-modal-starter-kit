@@ -437,6 +437,7 @@ export async function describeImageForVideo(
           "fal-ai/moondream/batched",
           {
             input: {
+              max_tokens: 2048,
               inputs: [
                 {
                   prompt: prompt,

@@ -219,6 +219,8 @@ INFERENCE_PLATFORM=fal
 FAL_KEY=***
 ```
 
+Currently, only the [moondream](https://huggingface.co/vikhyatk/moondream2) model is avaliable with fal. Stay tuned for llava7B and llava34B.
+
 ## Useful Commands
 
 Tigris is 100% aws cli compatible. Here are some frequently used commands during active development:
