@@ -273,19 +273,21 @@ export default function Page({
                   </video>
 
                   <div className="flex justify-center space-x-4 my-4">
-                    <select
-                      className="justify-left"
-                      value={selectedModel}
-                      onChange={(e) => setSelectedModel(e.target.value)}
-                    >
-                      {models.map((model) => {
-                        return (
-                          <option key={model} value={model}>
-                            {model}
-                          </option>
-                        );
-                      })}
-                    </select>
+                    {!!!inferencePlatform.startsWith("OpenAI") && (
+                      <select
+                        className="justify-left"
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value)}
+                      >
+                        {models.map((model) => {
+                          return (
+                            <option key={model} value={model}>
+                              {model}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    )}
 
                     <Button
                       className="bg-black text-white"
