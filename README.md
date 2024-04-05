@@ -84,7 +84,9 @@ Alternatively you can also uploading your own videos.
 
 ### Step 3: Set up Ollama / Llava
 
-By Default the app uses Ollama / llava for vision. If you want to use OpenAI Chatgpt4v instead, you can set `INFERENCE_PLATFORM=OpenAI` and fill in `OPENAI_API_KEY` in .env
+
+By Default the app uses Ollama / llava for vision. If you want to use OpenAI Chatgpt4v instead, you can set `INFERENCE_PLATFROM="OpenAI"` and fill in `OPENAI_API_KEY` in .env
+
 
 There are two ways to get Ollama up and running. You can either use [Fly GPU](https://fly.io/gpu), which provides very fast inference, or use your laptop.
 

@@ -133,6 +133,7 @@ export async function makeCollage(
   shouldCreateCollage: boolean,
   inferencePlatform: InferencePlatform,
   modelName: string
+
 ) {
   const framesFullPath = path.join(framesDir, videoName);
   const files = fs.readdirSync(framesFullPath);
@@ -453,7 +454,6 @@ export async function describeImageForVideo(
       } else if (modelName == "llava7b") {
         // TODO
       }
-
     case "replicate": // TODO
   }
 }

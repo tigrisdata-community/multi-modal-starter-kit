@@ -88,6 +88,15 @@ export default function Page({
     }
   }, [inferencePlatform]);
 
+
+  useEffect(() => {
+    if (selectedModel === undefined && models.length > 0) {
+      setSelectedModel(models[0]);
+    }
+    console.log("selected model: ", selectedModel);
+  }, [selectedModel, models]);
+
+
   useEffect(() => {
     if (currentAudio) {
       window.addEventListener("keydown", (event) => {
@@ -272,19 +281,21 @@ export default function Page({
                   </video>
 
                   <div className="flex justify-center space-x-4 my-4">
-                    <select
-                      className="justify-left"
-                      value={selectedModel}
-                      onChange={(e) => setSelectedModel(e.target.value)}
-                    >
-                      {models.map((model) => {
-                        return (
-                          <option key={model} value={model}>
-                            {model}
-                          </option>
-                        );
-                      })}
-                    </select>
+                    {!!!inferencePlatform.startsWith("OpenAI") && (
+                      <select
+                        className="justify-left"
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value)}
+                      >
+                        {models.map((model) => {
+                          return (
+                            <option key={model} value={model}>
+                              {model}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    )}
 
                     <Button
                       className="bg-black text-white"
