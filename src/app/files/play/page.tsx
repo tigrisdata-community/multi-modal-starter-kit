@@ -79,18 +79,14 @@ export default function Page({
         fetchOllamaList();
         const intervaId = setInterval(fetchOllamaList, 5000);
         return () => clearInterval(intervaId);
-      case "fal": // TODO
+      case "fal":
+        const falModels = ["moondream"];
+        setModels(falModels);
+        setSelectedModel(falModels[0]);
       case "OpenAI": // TODO
       case "replicate": // TODO
     }
   }, [inferencePlatform]);
-
-  useEffect(() => {
-    if (selectedModel === undefined && models.length > 0) {
-      setSelectedModel(models[0]);
-    }
-    console.log("selected model: ", selectedModel);
-  }, [selectedModel, models]);
 
   useEffect(() => {
     if (currentAudio) {
@@ -110,9 +106,12 @@ export default function Page({
 
   useEffect(() => {
     (async () => {
+      await getInferencePlatform();
       setInferencePlatform(await getInferencePlatform());
     })();
+  });
 
+  useEffect(() => {
     if (!initialized.current) {
       const es = connectToStream();
       setEventSource(es);

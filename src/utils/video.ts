@@ -17,6 +17,7 @@ import { Ollama } from "ollama";
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 import { Redis } from "@upstash/redis";
 import { InferencePlatform } from "@/app/actions";
+import * as fal from "@fal-ai/serverless-client";
 
 const openai = new OpenAI({
   // baseURL: "http://localhost:11434/v1",
@@ -29,7 +30,7 @@ const ollama = new Ollama({
 });
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL || "",
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || ""
+  token: process.env.UPSTASH_REDIS_REST_TOKEN || "",
 });
 
 //TODO - for debugging
@@ -46,7 +47,7 @@ type LLMOutput = {
 };
 
 export async function listOllamaModels() {
-  const models =  await ollama.list();
+  const models = await ollama.list();
   return ollama.list();
 }
 
@@ -131,7 +132,7 @@ export async function makeCollage(
   videoName: string,
   shouldCreateCollage: boolean,
   inferencePlatform: InferencePlatform,
-  modelName: string,
+  modelName: string
 ) {
   const framesFullPath = path.join(framesDir, videoName);
   const files = fs.readdirSync(framesFullPath);
@@ -276,7 +277,11 @@ export async function createCollage(
 
   const collageUrl = collageFromCapture
     ? `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/capture/${videoName}/${collageTs}.jpg`
-    : `https://${process.env.NEXT_PUBLIC_BUCKET_NAME}.fly.storage.tigris.dev/${tigrisCollagesDir}/${videoName}/collage-${batchIndex + 1}.jpg`;
+    : `https://${
+        process.env.NEXT_PUBLIC_BUCKET_NAME
+      }.fly.storage.tigris.dev/${tigrisCollagesDir}/${videoName}/collage-${
+        batchIndex + 1
+      }.jpg`;
 
   const uploadKey = collageFromCapture
     ? `capture/${videoName}/${collageTs}.jpg`
@@ -360,7 +365,7 @@ export async function describeImageForVideo(
   url: string,
   context: string = "",
   inferencePlatform: InferencePlatform,
-  modelName: string,
+  modelName: string
 ) {
   const cachedResult = await redis.get(url);
   if (cachedResult) {
@@ -381,8 +386,8 @@ export async function describeImageForVideo(
   Make your description unique and not repetitive please!. Also, please keep it to only a few sentances.
 
   "`;
-  
-  switch(inferencePlatform) {
+
+  switch (inferencePlatform) {
     case "Ollama":
       console.log("Ollama Model: ", modelName);
       const response = await ollama.chat({
@@ -425,7 +430,30 @@ export async function describeImageForVideo(
       await redis.expire(url, 60 * 60);
       console.log("AI Response: ", chatCompletion.choices[0].message.content);
       return chatCompletion.choices[0].message;
-    case "fal": // TODO
+    case "fal":
+      if (modelName == "moondream") {
+        const result: { outputs: string[] } = await fal.run(
+          "fal-ai/moondream/batched",
+          {
+            input: {
+              inputs: [
+                {
+                  prompt: prompt,
+                  image_url: url,
+                },
+              ],
+            },
+          }
+        );
+        await redis.set(url, result.outputs[0]);
+        await redis.expire(url, 60 * 60);
+        return { content: result.outputs[0] };
+      } else if (modelName == "llava34B") {
+        // TODO
+      } else if (modelName == "llava7b") {
+        // TODO
+      }
+
     case "replicate": // TODO
   }
 }

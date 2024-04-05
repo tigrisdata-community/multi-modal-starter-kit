@@ -206,6 +206,17 @@ export const inngestTick = inngest.createFunction(
 );
 ```
 
+### [Optional] Step 9: Change Inference Platforms
+
+#### fal
+
+fal.ai is an inference platfrom that specilizes on fast media model inference. To use fal with the multimodal starter-kit demo set the `INFERENCE_PLATFORM` environment variable to "fal", and add a new FAL_KEY environment variable from the fal.ai website. First, create an account with fal.ai, navigate to the keys page [keys](https://fal.ai/dashboard/keys) and follow the steps to create a key. Copy the result into the `.env` file and save it as FAL_KEY.
+
+```
+INFERENCE_PLATFORM=fal
+FAL_KEY=***
+```
+
 ## Useful Commands
 
 Tigris is 100% aws cli compatible. Here are some frequently used commands during active development:
