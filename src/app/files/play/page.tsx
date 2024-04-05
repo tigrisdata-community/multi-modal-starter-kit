@@ -1,8 +1,9 @@
 "use client";
 
 import {
+  InferencePlatform,
   fetchAndPlayTextToSpeech,
-  getModelName,
+  getInferencePlatform,
   listModels,
 } from "@/app/actions";
 import React from "react";
@@ -21,10 +22,11 @@ export default function Page({
   const [showSpinner, setShowSpinner] = useState(false);
   const [audioQueue, setAudioQueue] = useState<string[]>([]);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
-  const [modelName, setModelName] = useState<string>("Unknown");
+  const [inferencePlatform, setInferencePlatform] =
+    useState<InferencePlatform>("Ollama");
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement>();
-  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
-  const [selectedOllamaModel, setSelectedOllamaModel] = useState<string>();
+  const [models, setModels] = useState<string[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>();
 
   const [eventSource, setEventSource] = useState<any>(null);
   const initialized = useRef(false);
@@ -60,31 +62,35 @@ export default function Page({
   }, []);
 
   useEffect(() => {
-    if (modelName.startsWith("Ollama")) {
-      const fetchOllamaList = async () => {
-        const models = await listModels();
+    switch (inferencePlatform) {
+      case "Ollama":
+        const fetchOllamaList = async () => {
+          const models = await listModels();
 
-        const modelList = models.models
-          .filter(
-            (m) => m.details.families && m.details.families.includes("clip")
-          )
-          .map((model) => model.name);
+          const modelList = models.models
+            .filter(
+              (m) => m.details.families && m.details.families.includes("clip")
+            )
+            .map((model) => model.name);
 
-        setOllamaModels(modelList);
-      };
+          setModels(modelList);
+        };
 
-      fetchOllamaList();
-      const intervaId = setInterval(fetchOllamaList, 5000);
-      return () => clearInterval(intervaId);
+        fetchOllamaList();
+        const intervaId = setInterval(fetchOllamaList, 5000);
+        return () => clearInterval(intervaId);
+      case "fal": // TODO
+      case "OpenAI": // TODO
+      case "replicate": // TODO
     }
-  }, [modelName]);
+  }, [inferencePlatform]);
 
   useEffect(() => {
-    if (selectedOllamaModel === undefined && ollamaModels.length > 0) {
-      setSelectedOllamaModel(ollamaModels[0]);
+    if (selectedModel === undefined && models.length > 0) {
+      setSelectedModel(models[0]);
     }
-    console.log("selectedOllamaModel: ", selectedOllamaModel);
-  }, [selectedOllamaModel, ollamaModels]);
+    console.log("selected model: ", selectedModel);
+  }, [selectedModel, models]);
 
   useEffect(() => {
     if (currentAudio) {
@@ -104,8 +110,7 @@ export default function Page({
 
   useEffect(() => {
     (async () => {
-      const modelName = await getModelName();
-      setModelName(modelName);
+      setInferencePlatform(await getInferencePlatform());
     })();
 
     if (!initialized.current) {
@@ -167,7 +172,8 @@ export default function Page({
       body: JSON.stringify({
         url: videoUrl,
         key: searchParams.name,
-        ollamaModel: selectedOllamaModel,
+        modelName: selectedModel,
+        inferencePlatform: inferencePlatform,
       }),
     });
   }
@@ -222,7 +228,8 @@ export default function Page({
         method: "POST",
         body: JSON.stringify({
           frames: dataURLs,
-          ollamaModel: selectedOllamaModel,
+          modelName: selectedModel,
+          inferencePlatform: inferencePlatform,
         }),
       }).then(async (response) => {
         setShowSpinner(false);
@@ -266,13 +273,13 @@ export default function Page({
                   </video>
 
                   <div className="flex justify-center space-x-4 my-4">
-                    {modelName.startsWith("Ollama") && (
+                    {!!!inferencePlatform.startsWith("OpenAI") && (
                       <select
                         className="justify-left"
-                        value={selectedOllamaModel}
-                        onChange={(e) => setSelectedOllamaModel(e.target.value)}
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value)}
                       >
-                        {ollamaModels.map((model) => {
+                        {models.map((model) => {
                           return (
                             <option key={model} value={model}>
                               {model}
@@ -313,13 +320,13 @@ export default function Page({
                         🧠 Model:{" "}
                         <a
                           href={
-                            modelName.startsWith("Ollama")
+                            inferencePlatform.startsWith("Ollama")
                               ? "https://ollama.com/library/llava"
                               : "https://openai.com/"
                           }
                           className="text-blue-500 hover:text-blue-700"
                         >
-                          {modelName}
+                          {inferencePlatform}
                         </a>
                       </p>
                       <p className="text-md font-semibold text-left">

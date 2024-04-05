@@ -4,11 +4,13 @@ import { listOllamaModels } from "@/utils/video";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Redis } from "@upstash/redis";
 
+export type InferencePlatform = "Ollama" | "OpenAI" | "fal" | "replicate"
+
 const client = new S3Client();
 const redis = Redis.fromEnv();
 
-export async function getModelName() {
-  return process.env.USE_OLLAMA === "true" ? "Ollama (LLaVA)" : "OpenAI";
+export async function getInferencePlatform(): Promise<InferencePlatform> {
+  return (process.env.INFERENCE_PLATFROM) as InferencePlatform
 }
 
 export async function listModels() {

@@ -16,6 +16,7 @@ import sharp from "sharp";
 import { Ollama } from "ollama";
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 import { Redis } from "@upstash/redis";
+import { InferencePlatform } from "@/app/actions";
 
 const openai = new OpenAI({
   // baseURL: "http://localhost:11434/v1",
@@ -46,6 +47,7 @@ type LLMOutput = {
 };
 
 export async function listOllamaModels() {
+  const models =  await ollama.list();
   return ollama.list();
 }
 
@@ -129,7 +131,8 @@ const setKey = "ai-responses";
 export async function makeCollage(
   videoName: string,
   shouldCreateCollage: boolean,
-  ollamaModel?: string
+  inferencePlatform: InferencePlatform,
+  modelName: string,
 ) {
   const framesFullPath = path.join(framesDir, videoName);
   const files = fs.readdirSync(framesFullPath);
@@ -153,7 +156,8 @@ export async function makeCollage(
       const result: any = await describeImageForVideo(
         collageUrl,
         context,
-        ollamaModel
+        inferencePlatform,
+        modelName
       );
       const publishStr = result.content + "COLLAGE_URL:" + collageUrl;
       await publishNotification(setKey, publishStr || "");
@@ -179,7 +183,8 @@ export async function makeCollage(
         const result: any = await describeImageForVideo(
           collageUrl,
           context,
-          ollamaModel
+          inferencePlatform,
+          modelName
         );
         const publishStr = result.content + "COLLAGE_URL:" + collageUrl;
         console.log("publishStr", publishStr);
@@ -219,7 +224,7 @@ export async function createCollage(
   batchIndex: number,
   videoName: string,
   collageFromCapture: boolean = false // If true, the collage is created from the capture and frames are base64
-) {
+): Promise<string> {
   const collageWidth = 600; // Width of one image in the collage
   const collageHeight = 400; // Height of one image in the collage
 
@@ -355,7 +360,8 @@ export default async function toBase64ImageUrl(
 export async function describeImageForVideo(
   url: string,
   context: string = "",
-  ollamaModel?: string
+  inferencePlatform: InferencePlatform,
+  modelName: string,
 ) {
   const cachedResult = await redis.get(url);
   if (cachedResult) {
@@ -376,49 +382,52 @@ export async function describeImageForVideo(
   Make your description unique and not repetitive please!. Also, please keep it to only a few sentances.
 
   "`;
-
-  if (useOllama) {
-    console.log("Ollama Model: ", ollamaModel);
-    const response = await ollama.chat({
-      model: ollamaModel || "llava",
-      messages: [
-        systemPrompt,
-        {
-          role: "user",
-          content: prompt,
-          images: [await toBase64ImageUrl(url)],
-        },
-      ],
-    });
-    console.log("Ollama (Llava) Response: ", response.message);
-    await redis.set(url, response.message);
-    await redis.expire(url, 60 * 60);
-    return response.message;
-  } else {
-    const chatCompletion = await openai.chat.completions.create({
-      messages: [
-        systemPrompt,
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: prompt,
-            },
-            {
-              type: "image_url",
-              image_url: { url: url },
-            },
-          ],
-        },
-      ],
-      model: "gpt-4-vision-preview",
-      max_tokens: 2048,
-    });
-    await redis.set(url, chatCompletion.choices[0].message);
-    await redis.expire(url, 60 * 60);
-    console.log("AI Response: ", chatCompletion.choices[0].message.content);
-    return chatCompletion.choices[0].message;
+  
+  switch(inferencePlatform) {
+    case "Ollama":
+      console.log("Ollama Model: ", modelName);
+      const response = await ollama.chat({
+        model: modelName || "llava",
+        messages: [
+          systemPrompt,
+          {
+            role: "user",
+            content: prompt,
+            images: [await toBase64ImageUrl(url)],
+          },
+        ],
+      });
+      console.log("Ollama (Llava) Response: ", response.message);
+      await redis.set(url, response.message);
+      await redis.expire(url, 60 * 60);
+      return response.message;
+    case "OpenAI":
+      const chatCompletion = await openai.chat.completions.create({
+        messages: [
+          systemPrompt,
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: prompt,
+              },
+              {
+                type: "image_url",
+                image_url: { url: url },
+              },
+            ],
+          },
+        ],
+        model: "gpt-4-vision-preview",
+        max_tokens: 2048,
+      });
+      await redis.set(url, chatCompletion.choices[0].message);
+      await redis.expire(url, 60 * 60);
+      console.log("AI Response: ", chatCompletion.choices[0].message.content);
+      return chatCompletion.choices[0].message;
+    case "fal": // TODO
+    case "replicate": // TODO
   }
 }
 
