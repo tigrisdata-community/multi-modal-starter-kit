@@ -133,7 +133,6 @@ export async function makeCollage(
   shouldCreateCollage: boolean,
   inferencePlatform: InferencePlatform,
   modelName: string
-
 ) {
   const framesFullPath = path.join(framesDir, videoName);
   const files = fs.readdirSync(framesFullPath);
@@ -437,7 +436,7 @@ export async function describeImageForVideo(
           "fal-ai/moondream/batched",
           {
             input: {
-              max_tokens: 2048,
+              max_tokens: 1024,
               inputs: [
                 {
                   prompt: prompt,
