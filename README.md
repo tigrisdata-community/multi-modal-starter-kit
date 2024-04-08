@@ -7,6 +7,7 @@ A multi modal starter kit that can have AI narrate a video or scene of your choi
 - [LLaVa](https://ollama.com/library/llava) (powered by Ollama)
 - [LLaVa-vicuna](https://ollama.com/library/llava:7b-v1.6-vicuna-q4_0) (powered by Ollama)
 - [BakLLaVA](https://ollama.com/library/bakllava) (powered by Ollama)
+- [Moondream](https://moondream.ai/) (powered by Fal.ai)
 - ...and many others on https://ollama.com/library
 - GPT-4v
 
