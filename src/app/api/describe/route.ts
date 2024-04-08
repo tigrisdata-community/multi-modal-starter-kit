@@ -14,6 +14,6 @@ export async function POST(req: NextRequest) {
     "",
     inferencePlatform,
     modelName
-);
+  );
   return new Response(aiResponse.content + "COLLAGE_URL:" + collageUrl);
 }

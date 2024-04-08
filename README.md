@@ -19,7 +19,7 @@ https://github.com/tigrisdata-community/multi-modal-starter-kit/assets/3489963/4
 ## Stack
 
 - 💻 Video and Image hosting: [Tigris](https://www.tigrisdata.com/)
-- 🦙 Inference: [Ollama](https://github.com/jmorganca/ollama), with options to use OpenAI
+- 🦙 Inference: [Ollama](https://github.com/jmorganca/ollama), [Fal](https://fal.ai/) with options to use OpenAI
 - 🔌 GPU: [Fly](https://fly.io/)
 - 💾 Caching: [Upstash](https://upstash.com/)
 - 🤔 AI response pub/sub: [Upstash](https://upstash.com/)
@@ -84,7 +84,9 @@ Alternatively you can also uploading your own videos.
 
 ### Step 3: Set up Ollama / Llava
 
+
 By Default the app uses Ollama / llava for vision. If you want to use OpenAI Chatgpt4v instead, you can set `INFERENCE_PLATFROM="OpenAI"` and fill in `OPENAI_API_KEY` in .env
+
 
 There are two ways to get Ollama up and running. You can either use [Fly GPU](https://fly.io/gpu), which provides very fast inference, or use your laptop.
 
@@ -205,6 +207,19 @@ export const inngestTick = inngest.createFunction(
   }
 );
 ```
+
+### [Optional] Step 9: Change Inference Platforms
+
+#### fal
+
+fal.ai is an inference platfrom that specilizes on fast media model inference. To use fal with the multimodal starter-kit demo set the `INFERENCE_PLATFORM` environment variable to "fal", and add a new FAL_KEY environment variable from the fal.ai website. First, create an account with fal.ai, navigate to the keys page [keys](https://fal.ai/dashboard/keys) and follow the steps to create a key. Copy the result into the `.env` file and save it as FAL_KEY.
+
+```
+INFERENCE_PLATFORM=fal
+FAL_KEY=***
+```
+
+Currently, only the [moondream](https://huggingface.co/vikhyatk/moondream2) model is avaliable with fal. Stay tuned for llava7B and llava34B.
 
 ## Useful Commands
 
