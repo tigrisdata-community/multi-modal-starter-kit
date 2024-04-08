@@ -19,7 +19,7 @@ https://github.com/tigrisdata-community/multi-modal-starter-kit/assets/3489963/4
 ## Stack
 
 - 💻 Video and Image hosting: [Tigris](https://www.tigrisdata.com/)
-- 🦙 Inference: [Ollama](https://github.com/jmorganca/ollama), with options to use OpenAI
+- 🦙 Inference: [Ollama](https://github.com/jmorganca/ollama), [Fal](https://fal.ai/) with options to use OpenAI
 - 🔌 GPU: [Fly](https://fly.io/)
 - 💾 Caching: [Upstash](https://upstash.com/)
 - 🤔 AI response pub/sub: [Upstash](https://upstash.com/)
