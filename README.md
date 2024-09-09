@@ -42,6 +42,13 @@ https://github.com/tigrisdata-community/multi-modal-starter-kit/assets/3489963/4
 git clone git@github.com:[YOUR_GITHUB_ACCOUNT_NAME]/multi-modal-starter-kit.git
 ```
 
+#### Install dependencies
+
+If you are using [Homebrew](https://brew.sh) on your machine, run `brew bundle` to install all the needed dependencies. If you need to install them manually, install these from your package manager of choice:
+
+- [ffmpeg](https://www.ffmpeg.org/) (ideally with a wide berth of codecs supported; if you don't know what this means, the default package is probably fine)
+- [Node.js 20.x or higher](https://nodejs.org/en)
+
 ### Step 1: Set up Tigris
 
 1. Create an .env file
@@ -85,9 +92,7 @@ Alternatively you can also uploading your own videos.
 
 ### Step 3: Set up Ollama / Llava
 
-
 By Default the app uses Ollama / llava for vision. If you want to use OpenAI Chatgpt4v instead, you can set `INFERENCE_PLATFROM="OpenAI"` and fill in `OPENAI_API_KEY` in .env
-
 
 There are two ways to get Ollama up and running. You can either use [Fly GPU](https://fly.io/gpu), which provides very fast inference, or use your laptop.
 
